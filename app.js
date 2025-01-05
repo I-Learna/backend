@@ -7,6 +7,7 @@ const errorHandler = require('./src/middlewares/errorHandler');
 
 // routes importing
 const authRoutes = require('./src/routes/auth.routes');
+const dashRoutes = require('./src/routes/dashboard.routes');
 const industryRoutes = require('./src/routes/industry.routes');
 const sectorRoutes = require('./src/routes/sector.routes');
 
@@ -25,6 +26,7 @@ app.use(express.json());
 // routes
 app.use('/api/users', require('./src/routes/userRoutes'));
 app.use('/api/auth', authRoutes);
+app.use('/api/dash', dashRoutes);
 app.use('/api/industry', industryRoutes);
 app.use('/api/sectors', sectorRoutes);
 
