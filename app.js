@@ -5,7 +5,8 @@ const bodyParser = require('body-parser');
 const connectDB = require('./config/db');
 const errorHandler = require('./src/middlewares/errorHandler');
 
-// Routes Importing
+// routes importing
+const authRoutes = require('./src/routes/auth.routes');
 const industryRoutes = require('./src/routes/industry.routes');
 const sectorRoutes = require('./src/routes/sector.routes');
 
@@ -13,23 +14,57 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Connect to MongoDB
+// connect to DB
 connectDB();
 
-// Middleware
+// middlewares
 app.use(cors());
 app.use(bodyParser.json());
 app.use(express.json());
 
-// Routes
+// routes
 app.use('/api/users', require('./src/routes/userRoutes'));
+app.use('/api/auth', authRoutes);
 app.use('/api/industry', industryRoutes);
 app.use('/api/sectors', sectorRoutes);
 
-// Error Handler Middleware
+// error handler middleware
 app.use(errorHandler);
 
-// Start Server
+// server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
+
+
+// /ILERNA
+// │
+// ├── /config
+// │   └── db.js
+// │
+// ├── /node_modules
+// │
+// ├── /src
+// │   ├── /controllers
+// │   │   ├── industry.controller.js
+// │   │   ├── sector.controller.js
+// │   │   ├── userController.js
+// │   │
+// │   ├── /middlewares
+// │   │   └── errorHandler.js
+// │   │
+// │   ├── /model
+// │   │   ├── industry.model.js
+// │   │   ├── sector.model.js
+// │   │   ├── user.js
+// │   │
+// │   ├── /routes
+// │   │   ├── industry.routes.js
+// │   │   ├── sector.routes.js
+// │   │   ├── userRoutes.js
+// │
+// ├── .env
+// ├── .gitignore
+// ├── app.js
+// ├── package-lock.json
+// └── package.json
