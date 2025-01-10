@@ -1,26 +1,13 @@
 
 const express = require('express');
 const { protect } = require('../middlewares/authMiddleware');
-const { authorizeRoles } = require('../middlewares/roleMiddleware');
-const {
-    getUserDashboard,
-    getInstructorDashboard,
-    getOperationDashboard,
-    getPaymentDashboard
-} = require('../controllers/dashboard.controller');
+const { authorize } = require('../middlewares/rbacMiddleware');
+const { getDashboard } = require('../controllers/dashboard.controller');
 
 const router = express.Router();
 
-// user dash
-router.get('/user', protect, authorizeRoles('User'), getUserDashboard);
+router.get('/', protect, authorize('dashboard', 'access'), getDashboard);
 
-// instructor dash
-router.get('/instructor', protect, authorizeRoles('Admin'), getInstructorDashboard);
 
-// operation team dash
-router.get('/operation', protect, authorizeRoles('OperationTeam'), getOperationDashboard);
-
-// payment team dash
-router.get('/payment', protect, authorizeRoles('PaymentTeam'), getPaymentDashboard);
 
 module.exports = router;

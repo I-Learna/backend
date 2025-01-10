@@ -1,35 +1,25 @@
+const getDashboard = (req, res) => {
+    const roleDashboards = {
+        user: {
+            dashboard: 'User Dashboard',
+            analytics: 'Your booked courses, tracking, invoice history',
+        },
+        admin: {
+            dashboard: 'Admin Dashboard',
+            analytics: 'Admin-specific analytics, role management',
+        },
+        operation_team: {
+            dashboard: 'Operation Team Dashboard',
+            analytics: 'Student and instructor data, live tracking',
+        },
+        payment_team: {
+            dashboard: 'Payment Team Dashboard',
+            analytics: 'Invoice and payment tracking',
+        },
+    };
 
-const getUserDashboard = (req, res) => {
-    res.json({
-        dashboard: 'User Dashboard',
-        analytics: 'Number of booked courses, course analysis, invoice tracking, live course tracking'
-    });
+    const role = req.user.role;
+    res.json(roleDashboards[role] || { dashboard: 'Unknown role' });
 };
 
-const getInstructorDashboard = (req, res) => {
-    res.json({
-        dashboard: 'Instructor Dashboard',
-        analytics: 'Number of courses, reviews, location analysis, invoice tracking'
-    });
-};
-
-const getOperationDashboard = (req, res) => {
-    res.json({
-        dashboard: 'Operation Team Dashboard',
-        analytics: 'Student data, instructor analysis, course tracking, mentoring live courses'
-    });
-};
-
-const getPaymentDashboard = (req, res) => {
-    res.json({
-        dashboard: 'Payment Team Dashboard',
-        analytics: 'Invoice tracking, instructor payments, refund tracking'
-    });
-};
-
-module.exports = {
-    getUserDashboard,
-    getInstructorDashboard,
-    getOperationDashboard,
-    getPaymentDashboard
-};
+module.exports = { getDashboard };
