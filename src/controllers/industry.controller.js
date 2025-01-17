@@ -1,3 +1,4 @@
+const slugify = require('slugify');
 const Industry = require('../model/industry.model');
 
 exports.getAllIndustries = async (req, res) => {
@@ -20,8 +21,20 @@ exports.getIndustryById = async (req, res) => {
 };
 
 exports.createIndustry = async (req, res) => {
+  const { name, description } = req.body;
+
   try {
-    const industry = new Industry(req.body);
+    const formattedName = slugify(name, {
+      replacement: ' ',
+      lower: true,    // Convert to lowercase
+      strict: true,   // Remove special characters
+      trim: true,     // Remove leading and trailing spaces
+    })
+
+    const existingIndustry = await Industry.findOne({ name: formattedName });
+    if (existingIndustry) return res.status(400).json({ message: 'Industry already exists' });
+
+    const industry = new Industry({ name: formattedName, description });
     await industry.save();
     res.status(201).json(industry);
   } catch (err) {

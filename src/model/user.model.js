@@ -23,7 +23,7 @@ const userSchema = new mongoose.Schema({
         lowercase: true,
         trim: true,
         validate: {
-            validator: validator.isEmail, 
+            validator: validator.isEmail,
             message: 'Invalid email format',
         },
     },
@@ -50,7 +50,8 @@ const userSchema = new mongoose.Schema({
 });
 
 // hash password before saving
-userSchema.pre('save', async function (next) {A
+userSchema.pre('save', async function (next) {
+
     if (!this.isModified('password')) return next();
     this.password = await bcrypt.hash(this.password, 10);
     next();
