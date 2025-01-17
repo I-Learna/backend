@@ -10,6 +10,7 @@ const authRoutes = require('./src/routes/auth.routes');
 const dashRoutes = require('./src/routes/dashboard.routes');
 const industryRoutes = require('./src/routes/industry.routes');
 const sectorRoutes = require('./src/routes/sector.routes');
+const couponRoutes = require('./src/routes/coupon.routes');
 
 dotenv.config();
 const app = express();
@@ -29,6 +30,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/dash', dashRoutes);
 app.use('/api/industry', industryRoutes);
 app.use('/api/sectors', sectorRoutes);
+app.use('/api/coupon', couponRoutes);
 
 // error handler middleware
 app.use(errorHandler);

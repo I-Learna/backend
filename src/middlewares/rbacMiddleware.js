@@ -12,6 +12,8 @@ const authorize = (role, permission) => async (req, res, next) => {
         }
         next();
     } catch (error) {
+        console.log(error.message);
+        
         res.status(500).json({ message: 'Authorization error', error });
     }
 };

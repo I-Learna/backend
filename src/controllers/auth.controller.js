@@ -44,7 +44,7 @@ const loginUser = async (req, res) => {
 const assignRole = async (req, res) => {
     const { userId, role } = req.body;
 
-    if (!['user', 'admin', 'operation_team', 'payment_team'].includes(role)) {
+    if (!['User', 'Admin', 'OperationTeam', 'PaymentTeam'].includes(role)) {
         return res.status(400).json({ message: 'Invalid role' });
     }
 
@@ -57,6 +57,8 @@ const assignRole = async (req, res) => {
 
         res.status(200).json({ message: `Role updated to ${role} for user ${user.name}` });
     } catch (error) {
+        console.log(error.message);
+        
         res.status(500).json({ message: 'Role assignment failed', error });
     }
 };
