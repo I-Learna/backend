@@ -1,5 +1,4 @@
 const Coupon = require('../model/coupon.model');
-const User = require('../model/user.model');
 
 // creating new coupon (Admin Only)
 const createCoupon = async (req, res) => {
@@ -26,6 +25,7 @@ const createCoupon = async (req, res) => {
         res.status(201).json({ message: 'Coupon created successfully', coupon: newCoupon });
 
     } catch (error) {
+        console.log(error.message);
         res.status(500).json({ message: 'Error creating coupon', error: error.message });
     }
 };
@@ -60,5 +60,27 @@ const redeemCoupon = async (req, res) => {
         res.status(500).json({ message: 'Error redeeming coupon', error: error.message });
     }
 };
+// get all coupons
+const getAllCoupons = async (req, res) => {
+    try {
+        const coupons = await Coupon.find().populate('creator', 'name role');
+        res.status(200).json({ message: 'Coupons retrieved successfully', coupons });
+    } catch (error) {
+        res.status(500).json({ message: 'Error retrieving coupons', error: error.message });
+    }
+};
 
-module.exports = { createCoupon, redeemCoupon };
+// get coupon by code
+const getCouponByCode = async (req, res) => {
+    try {
+        const { code } = req.params;
+        console.log(code);
+        
+        const coupon = await Coupon.findOne({ code }).populate('creator', 'name role');
+        if (!coupon) return res.status(404).json({ message: 'Invalid coupon' });
+        res.status(200).json({ message: 'Coupon retrieved successfully', coupon });
+    } catch (error) {
+        res.status(500).json({ message: 'Error retrieving coupon', error: error.message });
+    }
+};
+module.exports = { createCoupon, redeemCoupon, getAllCoupons, getCouponByCode };
