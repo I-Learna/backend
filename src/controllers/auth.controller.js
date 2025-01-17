@@ -42,20 +42,40 @@ const loginUser = async (req, res) => {
 
 // assign Role
 const assignRole = async (req, res) => {
+    try {
     const { userId, role } = req.body;
+    const validRoles = ['User', 'Admin', 'OperationTeam', 'PaymentTeam'];
 
-    if (!['User', 'Admin', 'OperationTeam', 'PaymentTeam'].includes(role)) {
+    if (!validRoles.includes(role)) {
         return res.status(400).json({ message: 'Invalid role' });
     }
+    console.log(`Updating user: ${userId} to role: ${role}`);
 
-    try {
-        const user = await User.findById(userId);
-        if (!user) return res.status(404).json({ message: 'User not found' });
+    if (!userId || userId.length !== 24) {
+        return res.status(400).json({ message: 'Invalid userId format' });
+    }
 
-        user.role = role;
-        await user.save();
+    const user = await User.findOneAndUpdate(
+        { _id: userId },
+        { role: role },
+        { new: true, runValidators: false }
+    );
+    if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+    }
 
-        res.status(200).json({ message: `Role updated to ${role} for user ${user.name}` });
+    console.log(`User role updated: ${user.name} -> ${role}`);
+
+    res.status(200).json({
+        message: `Role updated to ${role} for user ${user.name}`,
+        user: {
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+        },
+    });
+
     } catch (error) {
         console.log(error.message);
         

@@ -8,7 +8,7 @@ const router = express.Router();
 router.post('/register', registerUser);
 router.post('/login', loginUser);
 
-router.post('/assign-role', protect, authorize('role', 'assign'), assignRole);
+router.post('/assign-role', protect, authorize('updateAny', 'role'), assignRole);
 
 
 module.exports = router;
