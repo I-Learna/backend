@@ -1,5 +1,5 @@
-const slugify = require('slugify');
 const Industry = require('../model/industry.model');
+const formatName = require('../utils/slugifyName');
 
 exports.getAllIndustries = async (req, res) => {
   try {
@@ -24,12 +24,8 @@ exports.createIndustry = async (req, res) => {
   const { name, description } = req.body;
 
   try {
-    const formattedName = slugify(name, {
-      replacement: ' ',
-      lower: true,    // Convert to lowercase
-      strict: true,   // Remove special characters
-      trim: true,     // Remove leading and trailing spaces
-    })
+
+    const formattedName = formatName(name);
 
     const existingIndustry = await Industry.findOne({ name: formattedName });
     if (existingIndustry) return res.status(400).json({ message: 'Industry already exists' });

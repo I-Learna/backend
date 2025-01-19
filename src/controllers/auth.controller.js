@@ -1,7 +1,12 @@
 const User = require('../model/user.model');
+const sendEmail = require('../utils/email');
+const emailTemplate = require('../utils/emailHtml');
+
+const generateAuthCode = require('../utils/generateAuthCode');
+
 const generateToken = require('../utils/generateToken');
 
-const slugify = require('slugify');
+const formatName = require('../utils/slugifyName');
 
 // registration
 const registerUser = async (req, res) => {
@@ -10,12 +15,7 @@ const registerUser = async (req, res) => {
         const userExists = await User.findOne({ email });
         if (userExists) return res.status(400).json({ message: 'User already exists' });
 
-        const formattedName = slugify(name, {
-            replacement: ' ',
-            lower: true,    // Convert to lowercase
-            strict: true,   // Remove special characters
-            trim: true,     // Remove leading and trailing spaces
-        })
+        const formattedName = formatName(name);
 
         const user = await User.create({ name: formattedName, email, password });
         res.status(201).json({
@@ -24,6 +24,7 @@ const registerUser = async (req, res) => {
             email: user.email,
             token: generateToken(user._id),
         });
+        await sendEmail({ email: req.body.email, template: emailTemplate(`${user._id}`) });
     } catch (error) {
         console.log(error.message);
         res.status(400).json({ message: 'Registration failed', error });

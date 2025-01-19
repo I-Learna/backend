@@ -1,6 +1,6 @@
 const Joi = require('joi');
 
-// Validation schema
+// Validation schema for user
 const userValidationSchema = Joi.object({
     name: Joi.string()
         .min(3)
@@ -21,6 +21,5 @@ const userValidationSchema = Joi.object({
         }),
     role: Joi.string().valid('User', 'Admin', 'OperationTeam', 'PaymentTeam').default('User'),
 });
-
 
 module.exports = userValidationSchema;
