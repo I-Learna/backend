@@ -7,15 +7,17 @@ const {
   updateIndustry,
   deleteIndustry,
 } = require('../controllers/industry.controller');
-const validateIndustry = require('../middlewares/industryValidationMiddleware');
+
+const validateRequest = require('../middlewares/validateRequestMiddleware');
+const industryValidationSchema = require('../validation/industryValidationSchema');
 
 router.route('/')
   .get(getAllIndustries)
-  .post(validateIndustry, createIndustry)
+  .post(validateRequest(industryValidationSchema), createIndustry)
 
 router.route('/:id')
   .get(getIndustryById)
-  .put(updateIndustry)
+  .put(validateRequest(industryValidationSchema), updateIndustry)
   .delete(deleteIndustry)
 
 module.exports = router;
