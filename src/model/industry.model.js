@@ -43,6 +43,15 @@ const industrySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+
+industrySchema.query.excludeFields = function () {
+  return this.select('-createdAt -updatedAt -__v');
+};
+
+industrySchema.query.includeFields = function () {
+  return this.select('-createdAt -updatedAt -__v');
+};
+
 // Pre-save middleware to create slugs
 industrySchema.pre('save', function (next) {
   if (this.isModified('name')) {

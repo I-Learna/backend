@@ -2,12 +2,12 @@ const express = require('express');
 const { registerUser, loginUser, assignRole } = require('../controllers/auth.controller');
 const { protect } = require('../middlewares/authMiddleware');
 const { authorize } = require('../middlewares/rbacMiddleware');
-const validateRequest = require('../middlewares/validateRequestMiddleware');
-const userValidationSchema = require('../validation/userValidationSchema');
+const userValidationRules = require('../validation/userValidationRules');
+const validateRequest = require('../middlewares/validationRequest');
 
 const router = express.Router();
 
-router.post('/register', validateRequest(userValidationSchema), registerUser);
+router.post('/register', validateRequest(userValidationRules), registerUser);
 router.post('/login', loginUser);
 
 

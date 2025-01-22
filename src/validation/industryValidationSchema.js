@@ -18,4 +18,6 @@ const industryValidationSchema = Joi.object({
     description: Joi.string().optional(),
 });
 
+
+
 module.exports = industryValidationSchema;

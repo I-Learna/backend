@@ -20,7 +20,16 @@ const formatEnglishName = (name) => {
     return slugify(name, options);
 };
 
+const capitalizeWords = (str) => {
+    return str
+        .toLowerCase()
+        .replace(/\b\w/g, (char) => char.toUpperCase());
+
+};
+
+
 module.exports = {
     formatArabicName,
-    formatEnglishName
+    formatEnglishName,
+    capitalizeWords
 };
