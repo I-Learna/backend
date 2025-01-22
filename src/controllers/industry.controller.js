@@ -24,9 +24,10 @@ exports.createIndustry = catchAsync(async (req, res, next) => {
 
   // Format the name before checking
   const formattedName = formatName(name);
+  console.log(formattedName);
 
   // Check if an industry with the same name already exists
-  const existingIndustry = await Industry.findOne({ name: formattedName });
+  const existingIndustry = await Industry.findOne({ slugName: formattedName });
 
   if (existingIndustry) {
     return next(new AppErr('Industry already exists', 409));  // Use 409 Conflict for duplicates

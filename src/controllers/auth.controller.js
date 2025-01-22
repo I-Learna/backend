@@ -1,6 +1,6 @@
 const User = require('../model/user.model');
-const sendEmail = require('../utils/email');
-const emailTemplate = require('../utils/emailHtml');
+const sendEmail = require('../services/email');
+const emailTemplate = require('../services/emailHtml');
 
 const generateAuthCode = require('../utils/generateAuthCode');
 

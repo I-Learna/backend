@@ -18,7 +18,7 @@ const handleJwt = (err) => {
   return new AppErr(message, 401);
 };
 const handleJwtExpiration = () => {
-  const message = `login is expired ,please log again`;
+  const message = `login is expired ,please login again`;
   return new AppErr(message, 401);
 };
 
