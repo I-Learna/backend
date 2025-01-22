@@ -2,6 +2,8 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
+const session = require('express-session');
 const connectDB = require('./config/db');
 const errorHandler = require('./src/middlewares/errorHandler');
 
@@ -16,12 +18,22 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// express-session middleware
+app.use(
+  session({
+      secret: 'your_secret_key',
+      resave: false,
+      saveUninitialized: false,
+      cookie: { secure: false } // set true in prod(HTTPS)
+  })
+);
 // connect to DB
 connectDB();
 
 // middlewares
 app.use(cors());
 app.use(bodyParser.json());
+app.use(cookieParser());
 app.use(express.json());
 
 // routes
