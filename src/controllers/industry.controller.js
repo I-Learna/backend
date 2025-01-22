@@ -1,7 +1,7 @@
 const AppErr = require('../middlewares/appErr');
 const catchAsync = require('../middlewares/catchAsync');
 const Industry = require('../model/industry.model');
-const formatName = require('../utils/slugifyName');
+const { formatArabicName, formatEnglishName } = require('../utils/slugifyName');
 
 exports.getAllIndustries = catchAsync(async (req, res, next) => {
   const industries = await Industry.find();
@@ -20,11 +20,15 @@ exports.getIndustryById = async (req, res) => {
 };
 
 exports.createIndustry = catchAsync(async (req, res, next) => {
-  const { name, description } = req.body;
-
+  const { name, name_ar } = req.body;
+  console.log(name_ar);
   // Format the name before checking
-  const formattedName = formatName(name);
+  const formattedName = formatEnglishName(name);
+  const formattedNameAr = formatArabicName(name_ar);
+
   console.log(formattedName);
+  // console.log(formattedNameAr);
+
 
   // Check if an industry with the same name already exists
   const existingIndustry = await Industry.findOne({ slugName: formattedName });
@@ -34,7 +38,7 @@ exports.createIndustry = catchAsync(async (req, res, next) => {
   }
 
   // Create a new industry
-  const industry = new Industry({ name: formattedName, description });
+  const industry = new Industry({ name: formattedName, name_ar: formattedNameAr });
 
   // Save the new industry
   await industry.save();

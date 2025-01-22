@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const { trim } = require('validator');
-const slugify = require('slugify'); // Use the slugify package for consistent slugs
+const { formatArabicName, formatEnglishName } = require('../utils/slugifyName');
 
 const industrySchema = new mongoose.Schema(
   {
@@ -16,7 +16,24 @@ const industrySchema = new mongoose.Schema(
         message: 'Name must contain only letters',
       },
     },
+    name_ar: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      validate: {
+        validator: function (value) {
+          return /^[\u0621-\u064A\s-]+$/.test(value); // Only allows Arabic letters and spaces
+        },
+        message: 'Name in Arabic must contain only Arabic letters',
+      },
+    },
     slugName: {
+      type: String,
+      unique: true,
+      trim: true,
+    },
+    slugName_ar: {
       type: String,
       unique: true,
       trim: true,
@@ -26,10 +43,14 @@ const industrySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Pre-save middleware to create slug
+// Pre-save middleware to create slugs
 industrySchema.pre('save', function (next) {
   if (this.isModified('name')) {
-    this.slugName = slugify(this.name, { lower: true, strict: true });
+    this.slugName = formatEnglishName(this.name);
+  }
+  if (this.isModified('name_ar')) {
+    // Custom slugify logic to preserve Arabic characters
+    this.slugName_ar = formatArabicName(this.name_ar)
   }
   next();
 });
