@@ -1,10 +1,10 @@
 const { body, param } = require('express-validator');
-const Industry = require('../model/industry.model');
+const Sector = require('../model/sector.model');
 const { formatEnglishName, formatArabicName } = require('../utils/slugifyName');
-const { findBySlug } = require('../repositories/industry.repository');
+const { findBySlug } = require('../repositories/sector.repository');
 const mongoose = require('mongoose');
 
-const industryCreateValidationRules = [
+const sectorCreateValidationRules = [
     // Validate name (English letters only)
     body('name')
         .isString()
@@ -15,8 +15,8 @@ const industryCreateValidationRules = [
         .withMessage('Name is required')
         .custom(async (name) => {
             const fomrattedName = formatEnglishName(name);
-            const existingIndustry = await findBySlug(fomrattedName);
-            if (existingIndustry) {
+            const existingSector = await findBySlug(fomrattedName);
+            if (existingSector) {
                 throw new Error('Industry Name already in use');
             }
         }),
@@ -31,7 +31,7 @@ const industryCreateValidationRules = [
         .withMessage('Arabic name is required')
 ];
 
-const industryUpdateValidationRules = [
+const sectorUpdateValidationRules = [
     param('id')
         .custom((value) => {
             if (!mongoose.Types.ObjectId.isValid(value)) {
@@ -62,6 +62,6 @@ const industryUpdateValidationRules = [
 
 
 module.exports = {
-    industryCreateValidationRules,
-    industryUpdateValidationRules,
+    sectorCreateValidationRules,
+    sectorUpdateValidationRules,
 };

@@ -2,15 +2,16 @@ const AppErr = require('../middlewares/appErr');
 const catchAsync = require('../middlewares/catchAsync');
 const Industry = require('../model/industry.model');
 const { formatArabicName, formatEnglishName, capitalizeWords } = require('../utils/slugifyName');
+const { getAll, getById, create, updateById, deleteById, findBySlug, findExact, findBySlugAndId } = require('../repositories/industry.repository');
 
 exports.getAllIndustries = catchAsync(async (req, res, next) => {
-  const industries = await Industry.find().excludeFields();
+  const industries = await getAll();
   if (!industries.length) return next(new AppErr('No industries yet', 404))
   return res.status(200).json({ status: 'success', data: industries })
 });
 
 exports.getIndustryById = catchAsync(async (req, res, next) => {
-  const industry = await Industry.findById(req.params.id).includeFields();
+  const industry = await getById(req.params.id);
   if (!industry) return next(new AppErr('Industry not found', 404));
   res.status(200).json({ message: 'success', data: industry });
 
@@ -19,10 +20,18 @@ exports.getIndustryById = catchAsync(async (req, res, next) => {
 exports.createIndustry = catchAsync(async (req, res, next) => {
   const { name, name_ar } = req.body;
   let capitalize = capitalizeWords(name);
-  const industry = new Industry({ name: capitalize, name_ar: name_ar.toLowerCase() });
-  // Save the new industry
-  await industry.save();
-  // Respond with the created industry
+
+  const formattedNameAr = formatArabicName(name_ar);
+  const formattedName = formatEnglishName(name); // Access and format the English name
+  const existingIndustry = await findBySlug(formattedName, formattedNameAr)
+  if (existingIndustry) return next(new AppErr('Industry already exists', 400));
+
+  const newIndustry = {
+    name: capitalize,
+    name_ar: name_ar.toLowerCase(),
+  };
+
+  const industry = await create(newIndustry);
   res.status(201).json({ message: 'Industry created successfully', data: industry });
 });
 
@@ -30,51 +39,46 @@ exports.createIndustry = catchAsync(async (req, res, next) => {
 exports.updateIndustry = catchAsync(async (req, res, next) => {
   const { name, name_ar } = req.body;
 
-  if (!name && !name_ar) return next(new AppErr('Please provide either name or arabic name', 400));
-
-  const formattedName = formatEnglishName(name);
-  const formattedNameAr = formatArabicName(name_ar);
-  console.log(formattedName, formattedNameAr);
-
-  // Check if the name exists with a different ID
-  const existingIndustry = await Industry.findOne({
-    _id: { $ne: req.params.id },
-    slugName: formattedName
-  });
-
-  if (existingIndustry) return res.status(400).json({ message: 'Industry already exists' });
-
-  // Check if the name exists with the same ID (no update needed)
-  const sameIndustry = await Industry.findOne({
-    _id: req.params.id,
-    name: formattedName,
-  });
-
-  console.log(sameIndustry);
-
-  if (sameIndustry?.slugName === formattedName && sameIndustry?.slugName_ar === formattedNameAr) {
-    return res.status(200).json({ message: 'No Change', data: sameIndustry }); // Return without updating
+  if (!name && !name_ar) {
+    return next(new AppErr('Please provide either name or Arabic name', 400));
   }
 
-  // Proceed to update if no conflicts
-  const industry = await Industry.findByIdAndUpdate(
-    req.params.id,
-    {
-      name: formattedName,
-      name_ar: formattedNameAr,
-      slugName: formattedName,
-      slugName_ar: formattedNameAr
-    },
-    { new: true }
-  );
+  const capitalize = capitalizeWords(name);
+  const formattedName = formatEnglishName(name);
+  const formattedNameAr = formatArabicName(name_ar);
 
-  res.status(200).json({ message: 'success', data: industry });
+  // التحقق إذا كان السجل موجودًا بنفس الاسم أو الاسم العربي مع ID مختلف
+  const existingIndustry = await findBySlugAndId(formattedName, formattedNameAr, req.params.id);
+  if (existingIndustry) {
+    return next(new AppErr('Sector already exists with the same name or Arabic name', 400));
+  }
 
+  // التحقق من أن السجل موجود بناءً على الـ ID المطلوب
+  const sameIndustry = await getById(req.params.id);
+  if (!sameIndustry) {
+    return next(new AppErr('Sector not found', 404));
+  }
+
+  // إذا لم يكن هناك تغيير، أعد البيانات بدون تحديث
+  if (sameIndustry.slugName === formattedName && sameIndustry.slugName_ar === formattedNameAr) {
+    return res.status(200).json({ message: 'No Change', data: sameIndustry });
+  }
+
+  // تحديث السجل إذا لم تكن هناك تعارضات
+  const updatedIndustry = await updateById(req.params.id, {
+    name: capitalize,
+    name_ar: name_ar.toLowerCase(),
+    slugName: formattedName,
+    slugName_ar: formattedNameAr,
+  });
+  res.status(200).json({ message: 'success', data: updatedIndustry });
 });
 
 
 exports.deleteIndustry = catchAsync(async (req, res, next) => {
-  const industry = await Industry.findByIdAndDelete(req.params.id);
-  if (!industry) return next(new AppErr('Industry not found', 404));
+  const industryIsExist = await getById(req.params.id);
+  if (!industryIsExist) return next(new AppErr('Industry not found', 404));
+
+  const industry = await deleteById(req.params.id);
   res.status(200).json({ message: 'success', data: industry });
 });

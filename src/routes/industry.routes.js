@@ -9,15 +9,16 @@ const {
 } = require('../controllers/industry.controller');
 
 const validateRequest = require('../middlewares/validationRequest');
-const industryValidationRules = require('../validation/industryValidationRule');
+const { industryCreateValidationRules, industryUpdateValidationRules } = require('../validation/industryValidationRule');
+const validateObjectId = require('../validation/validateObjectId');
 
 router.route('/')
   .get(getAllIndustries)
-  .post(validateRequest(industryValidationRules), createIndustry)
+  .post(validateRequest(industryCreateValidationRules), createIndustry)
 
 router.route('/:id')
-  .get(getIndustryById)
-  .put(validateRequest(industryValidationRules), updateIndustry)
-  .delete(deleteIndustry)
+  .get(validateRequest(validateObjectId), getIndustryById)
+  .put(validateRequest(industryUpdateValidationRules), updateIndustry)
+  .delete(validateRequest(validateObjectId), deleteIndustry)
 
 module.exports = router;
