@@ -8,17 +8,17 @@ const generateAuthCode = require('../utils/generateAuthCode');
 
 const generateToken = require('../utils/generateToken');
 
-const { formatEnglishName } = require('../utils/slugifyName');
+const { formatName, capitalizeWords } = require('../utils/slugifyName');
 
 // registration
 const registerUser = catchAsync(async (req, res, next) => {
-    const { name, email, password } = req.body;
+    const { name, email, password, confirmPassword } = req.body;
 
     const userExists = await User.findOne({ email });
     if (userExists) return next(new AppErr('Email already exists', 409));
-    const formattedName = formatEnglishName(name);
+    const formattedName = capitalizeWords(formatName(name));
 
-    const user = await User.create({ name: formattedName, email, password });
+    const user = await User.create({ name: formattedName, email, password, confirmPassword });
     res.status(201).json({
         _id: user._id,
         name: user.name,

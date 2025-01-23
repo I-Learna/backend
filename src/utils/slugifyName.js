@@ -20,6 +20,17 @@ const formatEnglishName = (name) => {
     return slugify(name, options);
 };
 
+const formatName = (name) => {
+    const options = {
+        replacement: ' ', // Replace spaces or special characters with a hyphen
+        lower: true,      // Convert to lowercase
+        strict: true,     // Remove special characters
+        trim: true        // Remove leading and trailing spaces
+    };
+
+    return slugify(name, options);
+};
+
 const capitalizeWords = (str) => {
     return str
         .toLowerCase()
@@ -31,5 +42,6 @@ const capitalizeWords = (str) => {
 module.exports = {
     formatArabicName,
     formatEnglishName,
-    capitalizeWords
+    capitalizeWords,
+    formatName
 };

@@ -39,6 +39,16 @@ const userSchema = new mongoose.Schema({
             message: 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
         },
     },
+    confirmPassword: {
+        type: String,
+        required: [true, 'Confirm Password is required'],
+        validate: {
+            validator: function (value) {
+                return value === this.password; // Ensure confirmPassword matches password
+            },
+            message: 'Confirm Password must match Password',
+        },
+    },
     role: {
         type: String,
         enum: {
