@@ -21,7 +21,7 @@ const deleteById = async (id) => {
     return await Sector.findByIdAndDelete(id);
 };
 
-const findBySlugAndId = async (slugName, slugName_ar = null, id = null) => {
+const findBySlugInDiffrentId = async (slugName, slugName_ar = null, id = null) => {
     const query = {
         $or: [
             { slugName },
@@ -59,5 +59,5 @@ module.exports = {
     deleteById,
     findBySlug,
     findExact,
-    findBySlugAndId
+    findBySlugInDiffrentId
 };

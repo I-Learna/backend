@@ -1,7 +1,7 @@
 const AppErr = require('../middlewares/appErr');
 const catchAsync = require('../middlewares/catchAsync');
 const Sector = require('../model/sector.model');
-const { getAll, findBySlug, findExact, updateById, create, deleteById, getById, findBySlugAndId } = require('../repositories/sector.repository');
+const { getAll, findBySlug, findExact, updateById, create, deleteById, getById, findBySlugInDiffrentId } = require('../repositories/sector.repository');
 const { capitalizeWords, formatArabicName, formatEnglishName } = require('../utils/slugifyName');
 
 
@@ -47,17 +47,18 @@ exports.updateSector = catchAsync(async (req, res, next) => {
   const formattedName = formatEnglishName(name);
   const formattedNameAr = formatArabicName(name_ar);
 
-  // التحقق إذا كان السجل موجودًا بنفس الاسم أو الاسم العربي مع ID مختلف
-  const existingSector = await findBySlugAndId(formattedName, formattedNameAr, req.params.id);
-  if (existingSector) {
-    return next(new AppErr('Sector already exists with the same name or Arabic name', 400));
-  }
 
-  // التحقق من أن السجل موجود بناءً على الـ ID المطلوب
+  // Check if the record exists with the same ID
   const sameSector = await getById(req.params.id);
   if (!sameSector) {
     return next(new AppErr('Sector not found', 404));
   }
+  // Check if the record exists with the same name or Arabic name in different ID
+  const existingSector = await findBySlugInDiffrentId(formattedName, formattedNameAr, req.params.id);
+  if (existingSector) {
+    return next(new AppErr('Sector already exists with the same name or Arabic name', 400));
+  }
+
 
   // إذا لم يكن هناك تغيير، أعد البيانات بدون تحديث
   if (sameSector.slugName === formattedName && sameSector.slugName_ar === formattedNameAr) {

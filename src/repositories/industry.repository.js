@@ -22,7 +22,7 @@ const deleteById = async (id) => {
 };
 
 
-const findBySlugAndId = async (slugName, slugName_ar = null, id = null) => {
+const findBySlugInDiffrentId = async (slugName, slugName_ar = null, id = null) => {
     const query = {
         $or: [
             { slugName },
@@ -34,7 +34,7 @@ const findBySlugAndId = async (slugName, slugName_ar = null, id = null) => {
         query._id = { $ne: id }; // استبعاد السجل الحالي باستخدام ID
     }
 
-    return await Sector.findOne(query);
+    return await Industry.findOne(query);
 };
 
 
@@ -61,5 +61,5 @@ module.exports = {
     deleteById,
     findBySlug,
     findExact,
-    findBySlugAndId
+    findBySlugInDiffrentId
 };

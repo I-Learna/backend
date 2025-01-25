@@ -12,18 +12,18 @@ const validateRequest = (validations) => {
 
         // Get validation results
         const errors = validationResult(req);
-        console.log(errors.array());
 
         if (!errors.isEmpty()) {
             return res.status(400).json({
-                message: 'Validation failed', errors: errors.array().map((error) => ({
+                errorCode: 'VALIDATION_ERROR',
+                message: 'Validation failed',
+                errors: errors.array().map((error) => ({
                     field: error.path,
                     message: error.msg,
                 }))
             });
         }
 
-        // Proceed to the next middleware if no errors
         next();
     };
 };

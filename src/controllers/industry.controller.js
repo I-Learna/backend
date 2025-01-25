@@ -2,7 +2,7 @@ const AppErr = require('../middlewares/appErr');
 const catchAsync = require('../middlewares/catchAsync');
 const Industry = require('../model/industry.model');
 const { formatArabicName, formatEnglishName, capitalizeWords } = require('../utils/slugifyName');
-const { getAll, getById, create, updateById, deleteById, findBySlug, findExact, findBySlugAndId } = require('../repositories/industry.repository');
+const { getAll, getById, create, updateById, deleteById, findBySlug, findExact, findBySlugInDiffrentId } = require('../repositories/industry.repository');
 
 exports.getAllIndustries = catchAsync(async (req, res, next) => {
   const industries = await getAll();
@@ -22,7 +22,9 @@ exports.createIndustry = catchAsync(async (req, res, next) => {
   let capitalize = capitalizeWords(name);
 
   const formattedNameAr = formatArabicName(name_ar);
-  const formattedName = formatEnglishName(name); // Access and format the English name
+  const formattedName = formatEnglishName(name);
+
+  // Check if the record already exists with the same name or Arabic name
   const existingIndustry = await findBySlug(formattedName, formattedNameAr)
   if (existingIndustry) return next(new AppErr('Industry already exists', 400));
 
@@ -47,24 +49,25 @@ exports.updateIndustry = catchAsync(async (req, res, next) => {
   const formattedName = formatEnglishName(name);
   const formattedNameAr = formatArabicName(name_ar);
 
-  // التحقق إذا كان السجل موجودًا بنفس الاسم أو الاسم العربي مع ID مختلف
-  const existingIndustry = await findBySlugAndId(formattedName, formattedNameAr, req.params.id);
-  if (existingIndustry) {
-    return next(new AppErr('Sector already exists with the same name or Arabic name', 400));
-  }
-
-  // التحقق من أن السجل موجود بناءً على الـ ID المطلوب
+  // Check if the record exists with the same ID
   const sameIndustry = await getById(req.params.id);
   if (!sameIndustry) {
     return next(new AppErr('Sector not found', 404));
   }
 
-  // إذا لم يكن هناك تغيير، أعد البيانات بدون تحديث
+  // Check if the record exists with the same name or Arabic name in different ID
+  const existingIndustry = await findBySlugInDiffrentId(formattedName, formattedNameAr, req.params.id);
+  if (existingIndustry) {
+    return next(new AppErr('Sector already exists with the same name or Arabic name', 400));
+  }
+
+
+  // check if No change in name and Arabic name 
   if (sameIndustry.slugName === formattedName && sameIndustry.slugName_ar === formattedNameAr) {
     return res.status(200).json({ message: 'No Change', data: sameIndustry });
   }
 
-  // تحديث السجل إذا لم تكن هناك تعارضات
+  // Update the record
   const updatedIndustry = await updateById(req.params.id, {
     name: capitalize,
     name_ar: name_ar.toLowerCase(),

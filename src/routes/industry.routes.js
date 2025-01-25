@@ -16,6 +16,7 @@ router.route('/')
   .get(getAllIndustries)
   .post(validateRequest(industryCreateValidationRules), createIndustry)
 
+
 router.route('/:id')
   .get(validateRequest(validateObjectId), getIndustryById)
   .put(validateRequest(industryUpdateValidationRules), updateIndustry)
