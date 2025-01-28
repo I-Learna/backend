@@ -183,6 +183,32 @@ const assignRole = async (req, res) => {
     }
 }
 
+const resetPassword = async (req, res) => {
+    const { resetToken, newPassword } = req.body;
+
+    try {
+        const user = await User.findOne({
+            resetPasswordToken: resetToken,
+            resetPasswordExpires: { $gt: Date.now() }, 
+        });
+
+        if (!user) {
+            return res.status(400).json({ message: 'Invalid or expired reset token' });
+        }
+
+        user.password = newPassword;
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
+
+        await user.save();
+
+        res.status(200).json({ message: 'Password has been successfully reset' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Something went wrong' });
+    }
+};
+
 // Logout
 const logoutUser = (req, res) => {
     if (!req.cookies?.token) {
@@ -193,4 +219,12 @@ const logoutUser = (req, res) => {
     res.status(200).json({ message: 'Logged out successfully' });
 };
 
-module.exports = { refreshToken, registerUser, loginUser, googleAuth, linkedInAuth, assignRole, logoutUser };
+module.exports = { refreshToken, 
+    registerUser, 
+    loginUser, 
+    googleAuth, 
+    linkedInAuth, 
+    assignRole,
+    resetPassword, 
+    logoutUser 
+};

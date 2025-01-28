@@ -1,5 +1,5 @@
 const express = require('express');
-const { registerUser, loginUser, assignRole, logoutUser, googleAuth, linkedInAuth } = require('../controllers/auth.controller');
+const { registerUser, loginUser, assignRole, logoutUser, googleAuth, linkedInAuth, resetPassword } = require('../controllers/auth.controller');
 const { protect } = require('../middlewares/authMiddleware');
 const { authorize } = require('../middlewares/rbacMiddleware');
 const passport = require('../utils/passportConfig');
@@ -9,6 +9,7 @@ const router = express.Router();
 router.post('/register', registerUser);
 router.post('/login', loginUser);
 router.get('/logout', logoutUser);
+router.post('/reset-password', resetPassword);
 
 // Google OAuth routes
 router.get('/google', 
