@@ -11,7 +11,7 @@ const userSchema = new mongoose.Schema({
         maxlength: [50, 'Name cannot exceed 50 characters'],
         validate: {
             validator: function (value) {
-                return /^[a-zA-Z\s]+$/.test(value); // only alphabets and spaces
+                return /^[a-zA-Z\s]+$/.test(value); 
             },
             message: 'Name must contain only letters and spaces',
         },
@@ -29,11 +29,9 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: [true, 'Password is required'],
         minlength: [8, 'Password must be at least 8 characters long'],
         validate: {
             validator: function (value) {
-                // ensuringg password contains at least one uppercase letter, one lowercase letter, one digit, and one special character
                 return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(value);
             },
             message: 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
@@ -49,6 +47,15 @@ const userSchema = new mongoose.Schema({
             message: 'Confirm Password must match Password',
         },
     },
+    provider: {
+        type: String,
+        enum: ['local', 'google', 'linkedin'],
+        default: 'local',
+    },
+    providerId: {
+        type: String,
+        default: null,
+    },
     role: {
         type: String,
         enum: {
@@ -57,17 +64,31 @@ const userSchema = new mongoose.Schema({
         },
         default: 'User',
     },
-});
+    resetPasswordToken: {
+        type: String,
+        default: null,
+    },
+    resetPasswordExpires: {
+        type: Date,
+        default: null,
+    },
+}, { timestamps: true });
 
-// hash password before saving
+
+// Add a method to update the refresh token
+userSchema.methods.setRefreshToken = function (refreshToken) {
+    this.refreshToken = refreshToken;
+    return this.save();
+};
+
+// hash password before saving (Only for local signups)
 userSchema.pre('save', async function (next) {
-
-    if (!this.isModified('password')) return next();
+    if (!this.isModified('password') || !this.password) return next();
     this.password = await bcrypt.hash(this.password, 10);
     next();
 });
 
-// compare password
+// compare password (Only for local signups)
 userSchema.methods.comparePassword = async function (enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
 };
