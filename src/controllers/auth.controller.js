@@ -2,6 +2,11 @@ const User = require('../model/user.model');
 const generateToken = require('../utils/generateToken');
 const jwt = require('jsonwebtoken');
 
+
+
+// Refresh Token
+
+
 // Registration
 const registerUser = async (req, res) => {
     const { name, email, password } = req.body;
@@ -11,8 +16,14 @@ const registerUser = async (req, res) => {
 
         const user = await User.create({ name, email, password });
 
-        res.cookie('token', generateToken(user._id), { httpOnly: true, secure: true });
-        res.status(201).json({ _id: user._id, name: user.name, email: user.email });
+        const accessToken = generateAccessToken(user._id);
+        const refreshToken = generateRefreshToken(user._id);
+
+        // storing refresh token in the db
+        user.setRefreshToken(refreshToken);
+
+        res.cookie('accessToken', accessToken, { httpOnly: true, secure: true });
+        res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true });        res.status(201).json({ _id: user._id, name: user.name, email: user.email });
     } catch (error) {
         res.status(500).json({ message: 'Registration failed', error });
     }
@@ -26,13 +37,20 @@ const loginUser = async (req, res) => {
     try {
         const user = await User.findOne({ email });
         if (user && (await user.comparePassword(password))) {
-            const token = generateToken(user._id);
-            res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+            const accessToken = generateAccessToken(user._id);
+            const refreshToken = generateRefreshToken(user._id);
+
+            // Store refresh token in the database
+            user.setRefreshToken(refreshToken);
+
+            res.cookie('accessToken', accessToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+            res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+
             res.json({
                 _id: user._id,
                 name: user.name,
                 email: user.email,
-                token,
+                token: accessToken,
             });
             console.log(res.cookie);
             
@@ -48,7 +66,7 @@ const loginUser = async (req, res) => {
 const googleAuth = async (req, res) => {
     console.log(req.user);
     
-    const { id, name, email } = req.user;
+    const { id, name, email, accessToken, refreshToken } = req.user;
     console.log(id, name, email);
     
     try {
@@ -62,7 +80,10 @@ const googleAuth = async (req, res) => {
             });
         }
 
-        res.cookie('token', generateToken(user._id), { httpOnly: true, secure: true });
+        await user.setRefreshToken(refreshToken);
+
+        res.cookie('accessToken', accessToken, { httpOnly: true, secure: true });
+        res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true });        
         res.redirect('/api/industry');
     } catch (error) {
         console.log(error.message);
@@ -70,6 +91,36 @@ const googleAuth = async (req, res) => {
         res.status(500).json({ message: 'Google authentication failed', error });
     }
 };
+
+const linkedInAuth = async (req, res) => {
+    console.log(req.user);
+
+    const { id, name, email, accessToken, refreshToken } = req.user;
+    console.log(id, name, email);
+
+
+    try {
+        let user = await User.findOne({ email: email });
+
+        if (!user) {
+            user = await User.create({
+                name: name,
+                email: email,
+                password: id,
+            });
+        }
+
+        await user.setRefreshToken(refreshToken);
+
+        res.cookie('accessToken', accessToken, { httpOnly: true, secure: true });
+        res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true });        
+        res.redirect('/api/industry');
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json({ message: 'LinkedIn authentication failed', error });
+    }
+};
+
 
 // Assign Role
 const assignRole = async (req, res) => {
@@ -115,14 +166,12 @@ const assignRole = async (req, res) => {
 
 // Logout
 const logoutUser = (req, res) => {
-    console.log('before',req.cookies?.token);
     if (!req.cookies?.token) {
         return res.status(401).json({ message: 'Already logged out' });
     }
-
-res.clearCookie('token');
-console.log('after',req.cookies?.token);
+    res.clearCookie('accessToken');
+    res.clearCookie('refreshToken');
     res.status(200).json({ message: 'Logged out successfully' });
 };
 
-module.exports = { registerUser, loginUser, googleAuth, assignRole, logoutUser };
+module.exports = {  registerUser, loginUser, googleAuth, linkedInAuth, assignRole, logoutUser };

@@ -1,5 +1,5 @@
 const express = require('express');
-const { registerUser, loginUser, assignRole, logoutUser, googleAuth } = require('../controllers/auth.controller');
+const { registerUser, loginUser, assignRole, logoutUser, googleAuth, linkedInAuth } = require('../controllers/auth.controller');
 const { protect } = require('../middlewares/authMiddleware');
 const { authorize } = require('../middlewares/rbacMiddleware');
 const passport = require('../utils/passportConfig');
@@ -20,6 +20,14 @@ router.get(
     googleAuth
 );
 
+
+
+// LinkedIn callback
+router.get('/linkedin', passport.authenticate('linkedin'));
+router.get('/linkedin/callback',
+    passport.authenticate('linkedin', { failureRedirect: '/login' }),
+    linkedInAuth
+);
 router.post('/assign-role', protect, authorize('updateAny', 'role'), assignRole);
 
 
