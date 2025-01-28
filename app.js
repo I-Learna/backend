@@ -5,7 +5,8 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const connectDB = require('./config/db');
-const errorHandler = require('./src/middlewares/errorHandler');
+const AppErr = require('./src/middlewares/appErr');
+const errorController = require('./src/middlewares/errorController');
 
 // routes importing
 const authRoutes = require('./src/routes/auth.routes');
@@ -45,7 +46,12 @@ app.use('/api/sectors', sectorRoutes);
 app.use('/api/coupon', couponRoutes);
 
 // error handler middleware
-app.use(errorHandler);
+app.all('*', (req, res, next) => {
+  next(new AppErr(`cannot find this ${req.originalUrl} on the server`, 404));
+});
+
+app.use(errorController);
+
 
 // server
 app.listen(PORT, () => {

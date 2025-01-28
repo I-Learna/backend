@@ -3,18 +3,22 @@ const router = express.Router();
 const {
   getAllSectors,
   getSectorById,
-  createSesctor,
+  createSector,
   updateSector,
   deleteSector,
 } = require('../controllers/sector.controller');
 
-    router.route('/')
-        .get(getAllSectors)
-        .post(createSesctor)
+const validateRequest = require('../middlewares/validationRequest');
+const { sectorCreateValidationRules, sectorUpdateValidationRules } = require('../validation/sectorValidationRule');
+const validateObjectId = require('../validation/validateObjectId');
 
-    router.route('/:id')
-        .get(getSectorById)
-        .put(updateSector)
-        .delete(deleteSector)
+router.route('/')
+  .get(getAllSectors)
+  .post(validateRequest(sectorCreateValidationRules), createSector)
+
+router.route('/:id')
+  .get(validateRequest(validateObjectId), getSectorById)
+  .put(validateRequest(sectorUpdateValidationRules), updateSector)
+  .delete(validateRequest(validateObjectId), deleteSector)
 
 module.exports = router;

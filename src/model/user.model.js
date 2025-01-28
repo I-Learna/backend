@@ -23,7 +23,7 @@ const userSchema = new mongoose.Schema({
         lowercase: true,
         trim: true,
         validate: {
-            validator: validator.isEmail, 
+            validator: validator.isEmail,
             message: 'Invalid email format',
         },
     },
@@ -37,13 +37,23 @@ const userSchema = new mongoose.Schema({
             message: 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
         },
     },
+    confirmPassword: {
+        type: String,
+        required: [true, 'Confirm Password is required'],
+        validate: {
+            validator: function (value) {
+                return value === this.password; // Ensure confirmPassword matches password
+            },
+            message: 'Confirm Password must match Password',
+        },
+    },
     provider: {
         type: String,
         enum: ['local', 'google', 'linkedin'],
         default: 'local',
     },
     providerId: {
-        type: String, 
+        type: String,
         default: null,
     },
     role: {
