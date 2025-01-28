@@ -5,7 +5,26 @@ const jwt = require('jsonwebtoken');
 
 
 // Refresh Token
+const refreshToken = async (req, res) => {
+    const { refreshToken } = req.cookies;
 
+    if (!refreshToken) return res.status(401).json({ message: 'No refresh token provided' });
+
+    try {
+        const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
+
+        const user = await User.findById(decoded.id);
+        if (!user || user.refreshToken !== refreshToken) {
+            return res.status(403).json({ message: 'Invalid refresh token' });
+        }
+
+        const accessToken = generateAccessToken(user._id);
+        res.cookie('accessToken', accessToken, { httpOnly: true, secure: true });
+        res.status(200).json({ accessToken });
+    } catch (error) {
+        res.status(500).json({ message: 'Could not refresh access token', error });
+    }
+};
 
 // Registration
 const registerUser = async (req, res) => {
@@ -174,4 +193,4 @@ const logoutUser = (req, res) => {
     res.status(200).json({ message: 'Logged out successfully' });
 };
 
-module.exports = {  registerUser, loginUser, googleAuth, linkedInAuth, assignRole, logoutUser };
+module.exports = { refreshToken, registerUser, loginUser, googleAuth, linkedInAuth, assignRole, logoutUser };
