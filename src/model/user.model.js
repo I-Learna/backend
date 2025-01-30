@@ -11,7 +11,7 @@ const userSchema = new mongoose.Schema({
         maxlength: [50, 'Name cannot exceed 50 characters'],
         validate: {
             validator: function (value) {
-                return /^[a-zA-Z\s]+$/.test(value); 
+                return /^[a-zA-Z\s]+$/.test(value);
             },
             message: 'Name must contain only letters and spaces',
         },
@@ -37,16 +37,7 @@ const userSchema = new mongoose.Schema({
             message: 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
         },
     },
-    confirmPassword: {
-        type: String,
-        required: [true, 'Confirm Password is required'],
-        validate: {
-            validator: function (value) {
-                return value === this.password; // Ensure confirmPassword matches password
-            },
-            message: 'Confirm Password must match Password',
-        },
-    },
+
     provider: {
         type: String,
         enum: ['local', 'google', 'linkedin'],
@@ -59,7 +50,7 @@ const userSchema = new mongoose.Schema({
     role: {
         type: String,
         enum: {
-            values: ['User', 'Admin', 'OperationTeam', 'PaymentTeam'],
+            values: ['User', 'Admin', 'OperationTeam', 'PaymentTeam', 'Freelancer'],
             message: '{VALUE} is not a valid role',
         },
         default: 'User',
@@ -75,23 +66,48 @@ const userSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 
+// ✅ Define Virtual Field for confirmPassword
+userSchema
+    .virtual('confirmPassword')
+    .get(function () {
+        return this._confirmPassword;
+    })
+    .set(function (value) {
+        this._confirmPassword = value;
+    });
+
+// ✅ Compare plain confirmPassword with plain password before hashing
+userSchema.pre('validate', function (next) {
+    if (this.provider === 'local' && this.isModified('password')) {
+        if (this._confirmPassword !== this.password) {
+            this.invalidate('confirmPassword', 'Passwords do not match');
+        }
+    }
+    next();
+});
+
+// hash password before saving (Only for local signups)
+userSchema.pre('save', async function (next) {
+    if (this.provider !== 'local') return next(); // Skip for non-local providers
+
+    if (this.isModified('password')) {
+        this.password = await bcrypt.hash(this.password, 10);
+    }
+
+    this._confirmPassword = undefined; // Ensure confirmPassword is not stored
+    next();
+});
+// compare password (Only for local signups)
+userSchema.methods.comparePassword = async function (enteredPassword) {
+    return await bcrypt.compare(enteredPassword, this.password);
+};
+
 // Add a method to update the refresh token
 userSchema.methods.setRefreshToken = function (refreshToken) {
     this.refreshToken = refreshToken;
     return this.save();
 };
 
-// hash password before saving (Only for local signups)
-userSchema.pre('save', async function (next) {
-    if (!this.isModified('password') || !this.password) return next();
-    this.password = await bcrypt.hash(this.password, 10);
-    next();
-});
-
-// compare password (Only for local signups)
-userSchema.methods.comparePassword = async function (enteredPassword) {
-    return await bcrypt.compare(enteredPassword, this.password);
-};
 
 const User = mongoose.model('User', userSchema);
 module.exports = User;
