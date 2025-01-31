@@ -5,8 +5,10 @@ const sendEmail = require('../services/email');
 const emailTemplate = require('../services/emailHtml');
 
 const generateAuthCode = require('../utils/generateAuthCode');
-const generateToken = require('../utils/generateToken');
+const { generateAccessToken, generateRefreshToken } = require('../utils/generateToken');
 const jwt = require('jsonwebtoken');
+const { formatName, capitalizeWords } = require('../utils/slugifyName');
+
 
 // Registration
 const registerUser = catchAsync(async (req, res, next) => {
@@ -15,9 +17,11 @@ const registerUser = catchAsync(async (req, res, next) => {
     const userExists = await User.findOne({ email });
     if (userExists) return next(new AppErr('Email already exists', 409));
 
-    const user = await User.create({ name, email, password });
+    const formattedName = capitalizeWords(formatName(name));
 
-    const accessToken = generateToken(user._id);
+    const user = await User.create({ name: formattedName, email, password, confirmPassword });
+
+    const accessToken = generateAccessToken(user._id);
     const refreshToken = generateRefreshToken(user._id);
 
     // Store refresh token in the DB
@@ -27,6 +31,8 @@ const registerUser = catchAsync(async (req, res, next) => {
     res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true });
 
     res.status(201).json({ _id: user._id, name: user.name, email: user.email });
+
+    await sendEmail({ email: req.body.email, template: emailTemplate(`${user._id}`) });
 });
 
 // Login
@@ -38,7 +44,7 @@ const loginUser = catchAsync(async (req, res, next) => {
 
     if (await user.comparePassword(password)) {
         const accessToken = generateToken(user._id);
-        const refreshToken = generateRefreshToken(user._id);
+        const refreshToken = generateToken.generateRefreshToken(user._id);
 
         // Store refresh token in the DB
         user.setRefreshToken(refreshToken);
