@@ -89,6 +89,29 @@ const linkedInAuth = catchAsync(async (req, res, next) => {
     res.redirect('/api/dashboard');
 });
 
+// Forgot Password
+const forgotPassword = catchAsync(async (req, res, next) => {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) return next(new AppErr('User not found', 404));
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+    user.resetPasswordExpires = Date.now() + 15 * 60 * 1000; // 15min
+    await user.save({ validateBeforeSave: false });
+
+    // email
+    const resetURL = `${req.protocol}://${req.get('host')}/api/auth/reset-password/${resetToken}`;
+    await sendEmail({
+        email: user.email,
+        subject: 'Password reset request',
+        message: `You requested a pass reset. Click the link below to reset your password: \n\n${resetURL}\n\nThis link is valid for 15 minutes.`,
+    });
+
+    res.status(200).json({ message: 'Password reset email sent' });
+});
+
 // Reset Password
 const resetPassword = catchAsync(async (req, res, next) => {
     const { resetToken, newPassword, confirmPassword } = req.body;
@@ -107,6 +130,8 @@ const resetPassword = catchAsync(async (req, res, next) => {
 
     res.status(200).json({ message: 'Password reset successful' });
 });
+
+
 
 // Role Assignment
 const assignRole = catchAsync(async (req, res, next) => {
@@ -137,6 +162,7 @@ module.exports = {
     googleAuth,
     linkedInAuth,
     assignRole,
+    forgotPassword,
     resetPassword,
     logoutUser,
 };
