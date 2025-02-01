@@ -131,7 +131,20 @@ const resetPassword = catchAsync(async (req, res, next) => {
     res.status(200).json({ message: 'Password reset successful' });
 });
 
+// Change Password (Authenticated User)
+const changePassword = catchAsync(async (req, res, next) => {
+    const { oldPassword, newPassword, confirmPassword } = req.body;
+    const user = await User.findById(req.user._id);
 
+    if (!user) return next(new AppErr('User not found', 404));
+    if (!(await bcrypt.compare(oldPassword, user.password))) return next(new AppErr('Incorrect old password', 401));
+    if (newPassword !== confirmPassword) return next(new AppErr('Passwords do not match', 400));
+
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json({ message: 'Password changed successfully' });
+});
 
 // Role Assignment
 const assignRole = catchAsync(async (req, res, next) => {
@@ -162,6 +175,7 @@ module.exports = {
     googleAuth,
     linkedInAuth,
     assignRole,
+    changePassword,
     forgotPassword,
     resetPassword,
     logoutUser,
