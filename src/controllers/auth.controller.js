@@ -3,10 +3,7 @@ const catchAsync = require('../middlewares/catchAsync');
 const User = require('../model/user.model');
 const sendEmail = require('../services/email');
 const emailTemplate = require('../services/emailHtml');
-
-const generateAuthCode = require('../utils/generateAuthCode');
 const { generateAccessToken, generateRefreshToken } = require('../utils/generateToken');
-const jwt = require('jsonwebtoken');
 const { formatName, capitalizeWords } = require('../utils/slugifyName');
 
 
@@ -94,22 +91,21 @@ const linkedInAuth = catchAsync(async (req, res, next) => {
 
 // Reset Password
 const resetPassword = catchAsync(async (req, res, next) => {
-    const { resetToken, newPassword } = req.body;
+    const { resetToken, newPassword, confirmPassword } = req.body;
 
-    const user = await User.findOne({
-        resetPasswordToken: resetToken,
-        resetPasswordExpires: { $gt: Date.now() },
-    });
+    // Hash token and check user
+    const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+    const user = await User.findOne({ resetPasswordToken: hashedToken, resetPasswordExpires: { $gt: Date.now() } });
 
     if (!user) return next(new AppErr('Invalid or expired reset token', 400));
+    if (newPassword !== confirmPassword) return next(new AppErr('Passwords do not match', 400));
 
     user.password = newPassword;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
-
     await user.save();
 
-    res.status(200).json({ message: 'Password has been successfully reset' });
+    res.status(200).json({ message: 'Password reset successful' });
 });
 
 // Role Assignment
