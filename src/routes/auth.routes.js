@@ -22,14 +22,14 @@ router.get('/google',
 router.get(
     '/google/callback',
     passport.authenticate('google', { failureRedirect: '/' }),
-    googleAuth
+    User.googleAuth
 );
 
 // LinkedIn callback
 router.get('/linkedin', passport.authenticate('linkedin'));
 router.get('/linkedin/callback',
     passport.authenticate('linkedin', { failureRedirect: '/login' }),
-    linkedInAuth
+    User.linkedInAuth
 );
 
 router.post('/assign-role', protect, authorize('updateAny', 'role'), assignRole);
