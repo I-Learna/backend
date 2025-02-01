@@ -32,6 +32,6 @@ router.get('/linkedin/callback',
     User.linkedInAuth
 );
 
-router.post('/assign-role', protect, authorize('updateAny', 'role'), assignRole);
+router.post('/assign-role', protect, authorize('updateAny', 'role'), User.assignRole);
 
 module.exports = router;
