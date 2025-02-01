@@ -13,7 +13,7 @@ router.post('/login', User.loginUser);
 router.get('/logout', User.logoutUser);
 router.post('/forget-password', User.forgotPassword);
 router.post('/reset-password', User.resetPassword);
-router.post('/change-password', User.changePassword);
+router.post('/change-password',  protect, User.changePassword);
 
 // Google OAuth routes
 router.get('/google', 

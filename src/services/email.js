@@ -8,9 +8,9 @@ const sendEmail = async (options) => {
         },
     });
     const info = await transporter.sendMail({
-        from: '"foo" <ahmed.nassar855@gmail.com>',
+        from: '"Ilearna Group" <ahmed.nassar855@gmail.com>',
         to: options.email,
-        subject: "Hello ✔",
+        subject: options.subject,
         html: options.template,
     });
     console.log('Message sent: %s', info.messageId);

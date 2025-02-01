@@ -5,7 +5,8 @@ const sendEmail = require('../services/email');
 const emailTemplate = require('../services/emailHtml');
 const { generateAccessToken, generateRefreshToken } = require('../utils/generateToken');
 const { formatName, capitalizeWords } = require('../utils/slugifyName');
-
+const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 
 // Registration
 const registerUser = catchAsync(async (req, res, next) => {
@@ -91,39 +92,52 @@ const linkedInAuth = catchAsync(async (req, res, next) => {
 
 // Forgot Password
 const forgotPassword = catchAsync(async (req, res, next) => {
-    const { email } = req.body;
-    const user = await User.findOne({ email });
-    if (!user) return next(new AppErr('User not found', 404));
+    try {
+        const { email } = req.body;
+        const user = await User.findOne({ email });
+        if (!user) return next(new AppErr('User not found', 404));
 
-    // Generate reset token
-    const resetToken = crypto.randomBytes(32).toString('hex');
-    user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-    user.resetPasswordExpires = Date.now() + 15 * 60 * 1000; // 15min
-    await user.save({ validateBeforeSave: false });
+        // Generate reset token
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+        user.resetPasswordExpires = Date.now() + 15 * 60 * 1000; // 15min
+        await user.save({ validateBeforeSave: false });
 
-    // email
-    const resetURL = `${req.protocol}://${req.get('host')}/api/auth/reset-password/${resetToken}`;
-    await sendEmail({
-        email: user.email,
-        subject: 'Password reset request',
-        message: `You requested a pass reset. Click the link below to reset your password: \n\n${resetURL}\n\nThis link is valid for 15 minutes.`,
-    });
-
-    res.status(200).json({ message: 'Password reset email sent' });
+        // Email
+        const resetURL = `${req.protocol}://${req.get('host')}/api/auth/reset-password/${resetToken}`;
+        await sendEmail({
+            email: user.email,
+            subject: 'Password reset request',
+            message: `You requested a password reset. Click the link below to reset your password: \n\n${resetURL}\n\nThis link is valid for 15 minutes.`,
+            template: emailTemplate(resetURL),
+        });
+        console.log(resetToken);
+        
+        res.status(200).json({ message: 'Password reset email sent' });
+    } catch (error) {
+        console.error(error);
+        next(error);
+    }
 });
 
 // Reset Password
 const resetPassword = catchAsync(async (req, res, next) => {
     const { resetToken, newPassword, confirmPassword } = req.body;
 
-    // Hash token and check user
     const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
     const user = await User.findOne({ resetPasswordToken: hashedToken, resetPasswordExpires: { $gt: Date.now() } });
 
-    if (!user) return next(new AppErr('Invalid or expired reset token', 400));
-    if (newPassword !== confirmPassword) return next(new AppErr('Passwords do not match', 400));
-
+    if (!user) {
+        console.log('Invalid or expired reset token');
+        return res.status(400).json({ message: 'Invalid or expired reset token' });
+    }    
     user.password = newPassword;
+    user.confirmPassword = confirmPassword;
+
+    if (newPassword !== confirmPassword) {
+        console.log('Passwords do not match');
+        return res.status(400).json({ message: 'Passwords do not match' });
+    }
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
     await user.save();
@@ -131,19 +145,33 @@ const resetPassword = catchAsync(async (req, res, next) => {
     res.status(200).json({ message: 'Password reset successful' });
 });
 
+
 // Change Password (Authenticated User)
 const changePassword = catchAsync(async (req, res, next) => {
-    const { oldPassword, newPassword, confirmPassword } = req.body;
-    const user = await User.findById(req.user._id);
+    try {
+        const { oldPassword, newPassword, confirmPassword } = req.body;
+        
+        const user = await User.findById(req.user._id).select('+password');
+        console.log(user);
+        user.confirmPassword = confirmPassword;
+        if (!user) {
+            console.log('Invalid or expired reset token');
+            return res.status(400).json({ message: 'Invalid or expired reset token' });
+        }        
+        if (!bcrypt.compare(oldPassword, user.password)) {
+            return res.status(401).json({ message: 'IIncorrect old password' });
+        }
+        if (newPassword !== confirmPassword) {
+            console.log('Passwords do not match');
+            return res.status(400).json({ message: 'Passwords do not match' });
+        }
+        user.password = newPassword;
+        await user.save();
 
-    if (!user) return next(new AppErr('User not found', 404));
-    if (!(await bcrypt.compare(oldPassword, user.password))) return next(new AppErr('Incorrect old password', 401));
-    if (newPassword !== confirmPassword) return next(new AppErr('Passwords do not match', 400));
-
-    user.password = newPassword;
-    await user.save();
-
-    res.status(200).json({ message: 'Password changed successfully' });
+        res.status(200).json({ message: 'Password changed successfully' });
+    } catch (err) {
+        return next(err);
+    }
 });
 
 // Role Assignment
