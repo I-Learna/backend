@@ -3,10 +3,12 @@ const catchAsync = require('../middlewares/catchAsync');
 const User = require('../model/user.model');
 const sendEmail = require('../services/email');
 const emailTemplate = require('../services/emailHtml');
-const { generateAccessToken, generateRefreshToken } = require('../utils/generateToken');
+const generateToken = require('../utils/generateToken');
 const { formatName, capitalizeWords } = require('../utils/slugifyName');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
+const generateOTP = require('../utils/generateOTP');
+const { createSendToken } = require('../utils/createSendToken');
 
 // Registration
 const registerUser = catchAsync(async (req, res, next) => {
@@ -16,11 +18,13 @@ const registerUser = catchAsync(async (req, res, next) => {
     if (userExists) return next(new AppErr('Email already exists', 409));
 
     const formattedName = capitalizeWords(formatName(name));
+    const verificationCode = generateOTP();
+    const verificationCodeExpires = new Date(Date.now() + 24 * 60 * 60 * 1000)
 
-    const user = await User.create({ name: formattedName, email, password, confirmPassword });
+    const user = await User.create({ name: formattedName, email, password, confirmPassword, verificationCode, verificationCodeExpires });
 
-    const accessToken = generateAccessToken(user._id);
-    const refreshToken = generateRefreshToken(user._id);
+    const accessToken = generateToken.generateAccessToken(user._id);
+    const refreshToken = generateToken.generateRefreshToken(user._id);
 
     // Store refresh token in the DB
     user.setRefreshToken(refreshToken);
@@ -28,11 +32,33 @@ const registerUser = catchAsync(async (req, res, next) => {
     res.cookie('accessToken', accessToken, { httpOnly: true, secure: true });
     res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true });
 
+
+
     res.status(201).json({ _id: user._id, name: user.name, email: user.email });
 
-    await sendEmail({ email: req.body.email, template: emailTemplate(`${user._id}`) });
+    await sendEmail({ email: req.body.email, template: emailTemplate(verificationCode) });
 });
 
+const verifyEmail = catchAsync(async (req, res, next) => {
+    const { verificationCode, email } = req.body;
+    if (!email || !verificationCode) {
+        return next(new AppErr('please enter your email and verifiction code ', 400));
+    }
+    const user = await User.findOne({ verificationCode, email });
+
+    // Check if the user and the verification code are valid
+    if (!user || !user.verificationCodeExpires || Date.now() > user.verificationCodeExpires) {
+        return next(new AppErr('user not exist or Invalid or expired verification code', 400));
+    }
+
+
+    const confirmedUser = await User.findByIdAndUpdate(user._id, { isEmailVerified: true, verificationCode: null, verificationCodeExpires: null }, { new: true, runValidators: true });
+
+    console.log(confirmedUser);
+
+    createSendToken(confirmedUser, 200, res);
+
+});
 // Login
 const loginUser = catchAsync(async (req, res, next) => {
     const { email, password } = req.body;
@@ -40,20 +66,24 @@ const loginUser = catchAsync(async (req, res, next) => {
     const user = await User.findOne({ email });
     if (!user) return next(new AppErr('Invalid email or password', 401));
 
-    if (await user.comparePassword(password)) {
-        const accessToken = generateToken(user._id);
-        const refreshToken = generateToken.generateRefreshToken(user._id);
-
-        // Store refresh token in the DB
-        user.setRefreshToken(refreshToken);
-
-        res.cookie('accessToken', accessToken, { httpOnly: true, secure: true });
-        res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true });
-
-        res.status(200).json({ _id: user._id, name: user.name, email: user.email, token: accessToken });
-    } else {
+    if (!user.isEmailVerified) {
+        return next(new AppErr('Please verify your email', 401));
+    }
+    if (!(await user.comparePassword(password))) {
         return next(new AppErr('Invalid email or password', 401));
     }
+
+    const accessToken = generateToken.generateAccessToken(user._id);
+    const refreshToken = generateToken.generateRefreshToken(user._id);
+
+    // Store refresh token in the DB
+    user.setRefreshToken(refreshToken);
+
+    res.cookie('accessToken', accessToken, { httpOnly: true, secure: true });
+    res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true });
+
+    res.status(200).json({ _id: user._id, name: user.name, email: user.email, token: accessToken });
+
 });
 
 // Google Authentication Callback
@@ -112,7 +142,7 @@ const forgotPassword = catchAsync(async (req, res, next) => {
             template: emailTemplate(resetURL),
         });
         console.log(resetToken);
-        
+
         res.status(200).json({ message: 'Password reset email sent' });
     } catch (error) {
         console.error(error);
@@ -130,7 +160,7 @@ const resetPassword = catchAsync(async (req, res, next) => {
     if (!user) {
         console.log('Invalid or expired reset token');
         return res.status(400).json({ message: 'Invalid or expired reset token' });
-    }    
+    }
     user.password = newPassword;
     user.confirmPassword = confirmPassword;
 
@@ -150,14 +180,14 @@ const resetPassword = catchAsync(async (req, res, next) => {
 const changePassword = catchAsync(async (req, res, next) => {
     try {
         const { oldPassword, newPassword, confirmPassword } = req.body;
-        
+
         const user = await User.findById(req.user._id).select('+password');
         console.log(user);
         user.confirmPassword = confirmPassword;
         if (!user) {
             console.log('Invalid or expired reset token');
             return res.status(400).json({ message: 'Invalid or expired reset token' });
-        }        
+        }
         if (!bcrypt.compare(oldPassword, user.password)) {
             return res.status(401).json({ message: 'IIncorrect old password' });
         }
@@ -207,4 +237,5 @@ module.exports = {
     forgotPassword,
     resetPassword,
     logoutUser,
+    verifyEmail
 };
