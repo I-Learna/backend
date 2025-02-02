@@ -52,32 +52,29 @@ const verifyEmail = catchAsync(async (req, res, next) => {
     }
 
 
-    const confirmedUser = await User.findByIdAndUpdate(user._id, { isEmailVerified: true, verificationCode: null, verificationCodeExpires: null }, { new: true, runValidators: true });
+    await User.findByIdAndUpdate(user._id, { isEmailVerified: true, verificationCode: null, verificationCodeExpires: null }, { new: true, runValidators: true });
 
-    console.log(confirmedUser);
-
-    createSendToken(confirmedUser, 200, res);
-
+    res.status(200).json({ message: 'Email verified successfully' });
 });
 // Login
 const loginUser = catchAsync(async (req, res, next) => {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select('+password');
     if (!user) return next(new AppErr('Invalid email or password', 401));
 
     if (!user.isEmailVerified) {
         return next(new AppErr('Please verify your email', 401));
     }
-    if (!(await user.comparePassword(password))) {
-        return next(new AppErr('Invalid email or password', 401));
-    }
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) return next(new AppErr('Invalid email or password', 401));
+
 
     const accessToken = generateToken.generateAccessToken(user._id);
     const refreshToken = generateToken.generateRefreshToken(user._id);
 
     // Store refresh token in the DB
-    user.setRefreshToken(refreshToken);
+    await user.setRefreshToken(refreshToken);
 
     res.cookie('accessToken', accessToken, { httpOnly: true, secure: true });
     res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true });
