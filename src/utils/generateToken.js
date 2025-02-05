@@ -10,4 +10,10 @@ const generateRefreshToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 };
 
-module.exports = { generateAccessToken, generateRefreshToken };
+
+const generateToken = {
+    generateAccessToken,
+    generateRefreshToken
+};
+
+module.exports = generateToken;

@@ -13,10 +13,12 @@ router.post('/login', User.loginUser);
 router.get('/logout', User.logoutUser);
 router.post('/forget-password', User.forgotPassword);
 router.post('/reset-password', User.resetPassword);
-router.post('/change-password',  protect, User.changePassword);
+router.post('/change-password', protect, User.changePassword);
+
+router.post('/verify-email', User.verifyEmail);
 
 // Google OAuth routes
-router.get('/google', 
+router.get('/google',
     passport.authenticate('google', { scope: ['profile', 'email'] })
 );
 router.get(

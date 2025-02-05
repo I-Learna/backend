@@ -29,13 +29,10 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
+        required: [true, 'Password is required'],
         minlength: [8, 'Password must be at least 8 characters long'],
-        validate: {
-            validator: function (value) {
-                return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(value);
-            },
-            message: 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
-        },
+
+        select: false
     },
 
     provider: {
@@ -55,6 +52,11 @@ const userSchema = new mongoose.Schema({
         },
         default: 'User',
     },
+
+    isEmailVerified: { type: Boolean, default: false },
+    verificationCodeExpires: { type: Date },
+    verificationCode: { type: String, length: [6, 'verification code is 6 character'] },
+
     resetPasswordToken: {
         type: String,
         default: null,
@@ -88,25 +90,31 @@ userSchema.pre('validate', function (next) {
 
 // hash password before saving (Only for local signups)
 userSchema.pre('save', async function (next) {
+
     if (this.provider !== 'local') return next(); // Skip for non-local providers
 
-    if (this.isModified('password')) {
-        this.password = await bcrypt.hash(this.password, 10);
+    if (!this.isModified('password')) {
+        next();
     }
+
+
+    this.password = await bcrypt.hash(this.password, 10);
 
     this._confirmPassword = undefined; // Ensure confirmPassword is not stored
     next();
 });
 // compare password (Only for local signups)
 userSchema.methods.comparePassword = async function (enteredPassword) {
-    return await bcrypt.compare(enteredPassword, this.password);
+    return bcrypt.compare(enteredPassword, this.password);
 };
 
 // Add a method to update the refresh token
 userSchema.methods.setRefreshToken = function (refreshToken) {
     this.refreshToken = refreshToken;
     return this.save();
+
 };
+
 
 
 const User = mongoose.model('User', userSchema);

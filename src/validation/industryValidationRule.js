@@ -10,16 +10,10 @@ const industryCreateValidationRules = [
         .isString()
         .withMessage('Name must be a string')
         .matches(/^[a-zA-Z\s-]+$/)
-        .withMessage('Name must contain only letters')
+        .withMessage('Name must contain only English letters')
         .notEmpty()
-        .withMessage('Name is required')
-        .custom(async (name) => {
-            const fomrattedName = formatEnglishName(name);
-            const existingIndustry = await findBySlug(fomrattedName);
-            if (existingIndustry) {
-                throw new Error('Industry Name already in use');
-            }
-        }),
+        .withMessage('Name is required'),
+
 
     // Validate name_ar (Arabic letters only)
     body('name_ar')

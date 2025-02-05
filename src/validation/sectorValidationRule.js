@@ -12,14 +12,7 @@ const sectorCreateValidationRules = [
         .matches(/^[a-zA-Z\s-]+$/)
         .withMessage('Name must contain only letters')
         .notEmpty()
-        .withMessage('Name is required')
-        .custom(async (name) => {
-            const fomrattedName = formatEnglishName(name);
-            const existingSector = await findBySlug(fomrattedName);
-            if (existingSector) {
-                throw new Error('Industry Name already in use');
-            }
-        }),
+        .withMessage('Name is required'),
 
     // Validate name_ar (Arabic letters only)
     body('name_ar')

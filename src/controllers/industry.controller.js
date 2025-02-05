@@ -58,13 +58,13 @@ exports.updateIndustry = catchAsync(async (req, res, next) => {
   // Check if the record exists with the same name or Arabic name in different ID
   const existingIndustry = await findBySlugInDiffrentId(formattedName, formattedNameAr, req.params.id);
   if (existingIndustry) {
-    return next(new AppErr('Sector already exists with the same name or Arabic name', 400));
+    return next(new AppErr('Industry already exists with the same name or Arabic name', 400));
   }
 
 
   // check if No change in name and Arabic name 
   if (sameIndustry.slugName === formattedName && sameIndustry.slugName_ar === formattedNameAr) {
-    return res.status(200).json({ message: 'No Change', data: sameIndustry });
+    return next(new AppErr('No data change', 400));
   }
 
   // Update the record
@@ -83,5 +83,5 @@ exports.deleteIndustry = catchAsync(async (req, res, next) => {
   if (!industryIsExist) return next(new AppErr('Industry not found', 404));
 
   const industry = await deleteById(req.params.id);
-  res.status(200).json({ message: 'success', data: industry });
+  res.status(200).json({ message: 'deleted success' });
 });

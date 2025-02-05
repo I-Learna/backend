@@ -106,8 +106,10 @@ const emailTemplate = (authCode) => {
     <div class="content">
       <p>Thank you for signing up! To complete your registration, please verify your email by clicking the button below:</p>
       
-      <a href="https://www.ilearn.com/verifyEmail/${authCode}" class="verification-box">Verify Email</a>
-      
+      <a href="https://www.ilearn.com/verifyEmail" class="verification-box">Verify Email</a>
+      <div class="otp-container">
+        <span class="otp">${authCode}</span>
+      </div>
       <p>If you did not create an account, you can safely ignore this email.</p>
     </div>
 
