@@ -13,7 +13,6 @@ const sendEmail = async (options) => {
         subject: options.subject,
         html: options.template,
     });
-    console.log('Message sent: %s', info.messageId);
 
 };
 

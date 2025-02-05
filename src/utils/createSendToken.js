@@ -1,6 +1,6 @@
-import { signToken } from "./createToken.js";
+const { signToken } = require("./createToken.js");
 
-export const createSendToken = (user, statusCode, res) => {
+const createSendToken = (user, statusCode, res) => {
   // userId: user._id, role: user.role
     const token = signToken({_id :user._id , isEmailVerified : user.isEmailVerified , status : user.status , role : user.role});
     const cookieOptions = {
@@ -19,3 +19,5 @@ export const createSendToken = (user, statusCode, res) => {
       role : user.role
     });
   };
+
+  module.exports = createSendToken;

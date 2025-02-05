@@ -62,7 +62,6 @@ const errorController = (err, req, res, next) => {
   if (process.env.NODE_ENV == 'development') {
     sendErrDevelpment(err, res);
   } else if (process.env.NODE_ENV == 'production') {
-    console.log(err, 'hhhhhhhhhhhhhhhhhhhh');
     // let err = JSON.parse(JSON.stringify(err))
     if (err.name === 'CastError') err = handleErrDBCast(err); //for requesting wrong id
     if (err.code === 11000) err = handleDuplicateFeildDB(err); // post the same name of tour

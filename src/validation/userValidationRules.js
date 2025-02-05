@@ -29,19 +29,16 @@ const userValidationRules = [
   // Validate password
   body('password')
     .isLength({ min: 8 })
-    .withMessage('Password must be at least 8 characters long')
+    .withMessage('Password must be at least 8 characters long!')
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/)
     .withMessage(
-      'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'
+      'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character!'
     ),
 
   body('confirmPassword')
     .isLength({ min: 8 })
-    .withMessage('Password must be at least 8 characters long')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/)
-    .withMessage(
-      'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'
-    ).custom((value, { req }) => {
+    .withMessage('Confirm Password must be at least 8 characters long!')
+    .custom((value, { req }) => {
       if (value !== req.body.password) {
         throw new Error('Confirm Password must match Password');
       }

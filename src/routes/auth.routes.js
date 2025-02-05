@@ -9,13 +9,13 @@ const passport = require('../utils/passportConfig');
 const router = express.Router();
 
 router.post('/register', validateRequest(userValidationRules), User.registerUser);
+router.get('/activate/:token', User.activateUser);
+router.patch('/admin/user/status', User.updateUserStatus); 
 router.post('/login', User.loginUser);
 router.get('/logout', User.logoutUser);
 router.post('/forget-password', User.forgotPassword);
 router.post('/reset-password', User.resetPassword);
 router.post('/change-password', protect, User.changePassword);
-
-router.post('/verify-email', User.verifyEmail);
 
 // Google OAuth routes
 router.get('/google',

@@ -7,7 +7,6 @@ const generateToken = require('../utils/generateToken');
 const { formatName, capitalizeWords } = require('../utils/slugifyName');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
-const generateOTP = require('../utils/generateOTP');
 const { createSendToken } = require('../utils/createSendToken');
 
 // Registration
@@ -18,44 +17,41 @@ const registerUser = catchAsync(async (req, res, next) => {
     if (userExists) return next(new AppErr('Email already exists', 409));
 
     const formattedName = capitalizeWords(formatName(name));
-    const verificationCode = generateOTP();
-    const verificationCodeExpires = new Date(Date.now() + 24 * 60 * 60 * 1000)
+    const verificationToken = generateToken.generateAccessToken(email);
+    await User.create({ name: formattedName, email, password, confirmPassword, isEmailVerified: false});
 
-    const user = await User.create({ name: formattedName, email, password, confirmPassword, verificationCode, verificationCodeExpires });
+    const activationUrl = `${process.env.CLIENT_URL}/activate?token=${verificationToken}`;
+    await sendEmail({ email: req.body.email, template: emailTemplate(activationUrl) });
 
-    const accessToken = generateToken.generateAccessToken(user._id);
-    const refreshToken = generateToken.generateRefreshToken(user._id);
+    res.status(201).json({ message: 'Registration successful. Please check your email for activation.' });
 
-    // Store refresh token in the DB
-    user.setRefreshToken(refreshToken);
-
-    res.cookie('accessToken', accessToken, { httpOnly: true, secure: true });
-    res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true });
-
-
-
-    res.status(201).json({ _id: user._id, name: user.name, email: user.email });
-
-    await sendEmail({ email: req.body.email, template: emailTemplate(verificationCode) });
 });
 
-const verifyEmail = catchAsync(async (req, res, next) => {
-    const { verificationCode, email } = req.body;
-    if (!email || !verificationCode) {
-        return next(new AppErr('please enter your email and verifiction code ', 400));
+// Activate User
+const activateUser = catchAsync(async (req, res, next) => {
+    const { token } = req.params;
+
+    if (!token) return next(new AppErr('Invalid activation link', 400));
+    
+    const decoded = generateToken.verifyToken(token);
+    if (!decoded || !decoded.id) {
+        return next(new AppErr('Invalid or expired token', 400));
     }
-    const user = await User.findOne({ verificationCode, email });
 
-    // Check if the user and the verification code are valid
-    if (!user || !user.verificationCodeExpires || Date.now() > user.verificationCodeExpires) {
-        return next(new AppErr('user not exist or Invalid or expired verification code', 400));
-    }
+    // Find the user by decoded email
+    const user = await User.findOne({ email: decoded.id });
+    if (!user) return next(new AppErr('User not found', 404));
 
+    if (user.isEmailVerified) return res.status(400).json({ message: 'User is already active' });
 
-    await User.findByIdAndUpdate(user._id, { isEmailVerified: true, verificationCode: null, verificationCodeExpires: null }, { new: true, runValidators: true });
-
-    res.status(200).json({ message: 'Email verified successfully' });
+    await User.findOneAndUpdate(
+        { email: decoded.id }, 
+        { isEmailVerified: true }, 
+        { new: true, runValidators: true }
+    );
+    res.status(200).json({ message: 'Account activated. You can now log in.' });
 });
+
 // Login
 const loginUser = catchAsync(async (req, res, next) => {
     const { email, password } = req.body;
@@ -172,7 +168,6 @@ const resetPassword = catchAsync(async (req, res, next) => {
     res.status(200).json({ message: 'Password reset successful' });
 });
 
-
 // Change Password (Authenticated User)
 const changePassword = catchAsync(async (req, res, next) => {
     try {
@@ -217,6 +212,23 @@ const assignRole = catchAsync(async (req, res, next) => {
     });
 });
 
+// Activate or Inactivate user
+const updateUserStatus = catchAsync(async (req, res, next) => {
+    const { userId, isEmailVerified } = req.body;
+
+    if (!userId || typeof isEmailVerified !== 'boolean') {
+        return next(new AppErr('Invalid request data', 400));
+    }
+
+    const user = await User.findById(userId);
+    if (!user) return next(new AppErr('User not found', 404));
+
+    user.isEmailVerified = isEmailVerified;
+    await user.save();
+
+    res.status(200).json({ message: `User status updated to ${isEmailVerified ? 'Active' : 'Inactive'}` });
+});
+
 // Logout
 const logoutUser = (req, res) => {
     res.clearCookie('accessToken');
@@ -227,12 +239,13 @@ const logoutUser = (req, res) => {
 module.exports = {
     registerUser,
     loginUser,
+    updateUserStatus,
+    activateUser,
     googleAuth,
     linkedInAuth,
     assignRole,
     changePassword,
     forgotPassword,
     resetPassword,
-    logoutUser,
-    verifyEmail
+    logoutUser
 };
