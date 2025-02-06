@@ -11,10 +11,11 @@ const router = express.Router();
 router.post('/register', validateRequest(userValidationRules), User.registerUser);
 router.get('/activate/:token', User.activateUser);
 router.patch('/admin/user/status', User.updateUserStatus); 
+router.get('/refresh-token', User.refreshToken);
 router.post('/login', User.loginUser);
 router.get('/logout', User.logoutUser);
 router.post('/forget-password', User.forgotPassword);
-router.post('/reset-password', User.resetPassword);
+router.post('/reset-password/:resetToken', User.resetPassword);
 router.post('/change-password', protect, User.changePassword);
 
 // Google OAuth routes

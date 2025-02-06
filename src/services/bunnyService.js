@@ -6,7 +6,6 @@ const bunnyAPI = axios.create({
     'AccessKey': process.env.BUNNY_API_KEY,
   },
 });
-console.log(bunnyAPI);
 
 const uploadVideo = async (file, storageZone) => {
   const formData = new FormData();

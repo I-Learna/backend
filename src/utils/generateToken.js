@@ -2,12 +2,20 @@ const jwt = require('jsonwebtoken');
 
 // Generate Access Token
 const generateAccessToken = (id) => {
-    return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    try {
+        return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    } catch (error) {
+        return null;
+    }
 };
 
 // Generate Refresh Token
 const generateRefreshToken = (id) => {
-    return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+    try {
+        return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+    } catch (error) {
+        return null;
+    }
 };
 
 const verifyToken = (token) => {

@@ -20,8 +20,9 @@ const registerUser = catchAsync(async (req, res, next) => {
     const verificationToken = generateToken.generateAccessToken(email);
     await User.create({ name: formattedName, email, password, confirmPassword, isEmailVerified: false});
 
-    const activationUrl = `${process.env.CLIENT_URL}/activate?token=${verificationToken}`;
+    const activationUrl = `${process.env.CLIENT_URL}/api/auth/activate/${verificationToken}`;
     await sendEmail({ email: req.body.email, template: emailTemplate(activationUrl) });
+    console.log(activationUrl);
 
     res.status(201).json({ message: 'Registration successful. Please check your email for activation.' });
 
@@ -52,6 +53,50 @@ const activateUser = catchAsync(async (req, res, next) => {
     res.status(200).json({ message: 'Account activated. You can now log in.' });
 });
 
+// Refresh Access Token
+const refreshToken = catchAsync(async (req, res, next) => {
+    const refreshTokenFromCookie = req.cookies.refreshToken;
+
+    if (!refreshTokenFromCookie) {
+        return next(new AppErr('Refresh token required', 403));
+    }
+
+    try {
+        const user = await User.findOne({ refreshToken: refreshTokenFromCookie });
+        if (!user) {
+            throw new Error('Invalid refresh token');
+        }
+
+        // Verifying the refresh token
+        const decoded = generateToken.verifyToken(refreshTokenFromCookie);
+        if (!decoded) {
+            return next(new AppErr('Invalid refresh token', 403));
+        }
+
+        // Generating new tokens
+        const newAccessToken = generateToken.generateAccessToken(user._id);
+        const newRefreshToken = generateToken.generateRefreshToken(user._id);
+
+        // Updating the user model with the new refresh token
+        await user.setRefreshToken(newRefreshToken);
+
+        // Sending the new tokens as cookies
+        res.cookie('accessToken', newAccessToken, { httpOnly: true, secure: true });
+        res.cookie('refreshToken', newRefreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'Strict',
+        });
+
+        res.status(200).json({
+            accessToken: newAccessToken,
+            refreshToken: newRefreshToken,
+        });
+    } catch (error) {
+        return next(new AppErr(error.message, 403));
+    }
+});
+
 // Login
 const loginUser = catchAsync(async (req, res, next) => {
     const { email, password } = req.body;
@@ -62,9 +107,9 @@ const loginUser = catchAsync(async (req, res, next) => {
     if (!user.isEmailVerified) {
         return next(new AppErr('Please verify your email', 401));
     }
+
     const isMatch = await user.comparePassword(password);
     if (!isMatch) return next(new AppErr('Invalid email or password', 401));
-
 
     const accessToken = generateToken.generateAccessToken(user._id);
     const refreshToken = generateToken.generateRefreshToken(user._id);
@@ -72,11 +117,21 @@ const loginUser = catchAsync(async (req, res, next) => {
     // Store refresh token in the DB
     await user.setRefreshToken(refreshToken);
 
+    // Sending tokens via cookies
     res.cookie('accessToken', accessToken, { httpOnly: true, secure: true });
-    res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true });
-
-    res.status(200).json({ _id: user._id, name: user.name, email: user.email, token: accessToken });
-
+    res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'Strict',
+    });
+    
+    res.status(200).json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        token: accessToken,
+        refreshToken,
+    });
 });
 
 // Google Authentication Callback
@@ -91,9 +146,13 @@ const googleAuth = catchAsync(async (req, res, next) => {
     await user.setRefreshToken(refreshToken);
 
     res.cookie('accessToken', accessToken, { httpOnly: true, secure: true });
-    res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true });
+    res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'Strict',
+    });
 
-    res.redirect('/api/dashboard');
+    res.redirect('/api/industry');
 });
 
 // LinkedIn Authentication Callback
@@ -108,9 +167,13 @@ const linkedInAuth = catchAsync(async (req, res, next) => {
     await user.setRefreshToken(refreshToken);
 
     res.cookie('accessToken', accessToken, { httpOnly: true, secure: true });
-    res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true });
+    res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'Strict',
+    });
 
-    res.redirect('/api/dashboard');
+    res.redirect('/api/industry');
 });
 
 // Forgot Password
@@ -127,14 +190,14 @@ const forgotPassword = catchAsync(async (req, res, next) => {
         await user.save({ validateBeforeSave: false });
 
         // Email
-        const resetURL = `${req.protocol}://${req.get('host')}/api/auth/reset-password/${resetToken}`;
+        const resetURL = `${process.env.CLIENT_URL}/api/auth/reset-password/${resetToken}`;
         await sendEmail({
             email: user.email,
             subject: 'Password reset request',
             message: `You requested a password reset. Click the link below to reset your password: \n\n${resetURL}\n\nThis link is valid for 15 minutes.`,
             template: emailTemplate(resetURL),
         });
-        console.log(resetToken);
+        console.log(resetURL);
 
         res.status(200).json({ message: 'Password reset email sent' });
     } catch (error) {
@@ -145,7 +208,9 @@ const forgotPassword = catchAsync(async (req, res, next) => {
 
 // Reset Password
 const resetPassword = catchAsync(async (req, res, next) => {
-    const { resetToken, newPassword, confirmPassword } = req.body;
+    const { newPassword, confirmPassword } = req.body;
+    const { resetToken } = req.params;
+console.log(resetToken);
 
     const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
     const user = await User.findOne({ resetPasswordToken: hashedToken, resetPasswordExpires: { $gt: Date.now() } });
@@ -173,20 +238,21 @@ const changePassword = catchAsync(async (req, res, next) => {
     try {
         const { oldPassword, newPassword, confirmPassword } = req.body;
 
-        const user = await User.findById(req.user._id).select('+password');
-        console.log(user);
+        const user = await User.findById(req.user._id).select('+password');        
         user.confirmPassword = confirmPassword;
         if (!user) {
-            console.log('Invalid or expired reset token');
-            return res.status(400).json({ message: 'Invalid or expired reset token' });
+            return res.status(400).json({ message: 'User not found' });
         }
-        if (!bcrypt.compare(oldPassword, user.password)) {
-            return res.status(401).json({ message: 'IIncorrect old password' });
+
+        const isMatch = await bcrypt.compare(oldPassword, user.password);
+        if (!isMatch) {
+            return res.status(401).json({ message: 'Incorrect old password' });
         }
+
         if (newPassword !== confirmPassword) {
-            console.log('Passwords do not match');
             return res.status(400).json({ message: 'Passwords do not match' });
         }
+
         user.password = newPassword;
         await user.save();
 
@@ -230,16 +296,27 @@ const updateUserStatus = catchAsync(async (req, res, next) => {
 });
 
 // Logout
-const logoutUser = (req, res) => {
-    res.clearCookie('accessToken');
-    res.clearCookie('refreshToken');
+const logoutUser = catchAsync(async (req, res, next) => {
+    const refreshToken = req.cookies.refreshToken;
+
+    const user = await User.findOne({ refreshToken });
+    if (!user) return next(new AppErr('User not found', 404));
+
+    await user.clearRefreshToken();
+
+    // maxAge is the maximum age of the cookie in milliseconds. we set it to 1 effectively deletes the cookie.
+    res.cookie('accessToken', '', { maxAge: 1 });
+    res.cookie('refreshToken', '', { maxAge: 1 });
+
     res.status(200).json({ message: 'Logged out successfully' });
-};
+});
+
 
 module.exports = {
     registerUser,
     loginUser,
     updateUserStatus,
+    refreshToken,
     activateUser,
     googleAuth,
     linkedInAuth,

@@ -65,6 +65,10 @@ const userSchema = new mongoose.Schema({
         type: Date,
         default: null,
     },
+    refreshToken: {
+        type: String,
+        default: null,
+    },
 }, { timestamps: true });
 
 
@@ -115,7 +119,11 @@ userSchema.methods.setRefreshToken = function (refreshToken) {
 
 };
 
-
+// Clearing refresh tokenn
+userSchema.methods.clearRefreshToken = async function () {
+    this.refreshToken = null;
+        await this.save();
+};
 
 const User = mongoose.model('User', userSchema);
 module.exports = User;
