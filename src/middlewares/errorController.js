@@ -56,7 +56,7 @@ const sendErrDevelpment = (err, res) => {
 };
 
 const errorController = (err, req, res, next) => {
-  console.log(err, 'iiiiiiiiiiiiiiiiiii');
+  console.log(err.message);
   err.statusCode = err.statusCode || 500; //internal server error
   err.status = err.status
   if (process.env.NODE_ENV == 'development') {

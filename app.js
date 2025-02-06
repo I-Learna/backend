@@ -14,6 +14,7 @@ const dashRoutes = require('./src/routes/dashboard.routes');
 const industryRoutes = require('./src/routes/industry.routes');
 const sectorRoutes = require('./src/routes/sector.routes');
 const couponRoutes = require('./src/routes/coupon.routes');
+const videoRoutes = require('./src/routes/video.routes');
 
 dotenv.config();
 const app = express();
@@ -44,6 +45,7 @@ app.use('/api/dash', dashRoutes);
 app.use('/api/industry', industryRoutes);
 app.use('/api/sectors', sectorRoutes);
 app.use('/api/coupon', couponRoutes);
+app.use('/api/video', videoRoutes);
 
 // error handler middleware
 app.all('*', (req, res, next) => {
