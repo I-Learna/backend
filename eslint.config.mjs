@@ -1,19 +1,19 @@
-import globals from "globals";
-import pluginJs from "@eslint/js";
-import tseslint from "typescript-eslint";
-import prettier from "eslint-config-prettier";
-import pluginPrettier from "eslint-plugin-prettier";
+import js from '@eslint/js';
+import prettier from 'eslint-plugin-prettier';
+import globals from 'globals';
 
-/** @type {import('eslint').Linter.Config[]} */
+/** @type {import("eslint").Linter.FlatConfig[]} */
 export default [
-  { files: ["**/*.{js,mjs,cjs,ts}"] },
-  { files: ["**/*.js"], languageOptions: { sourceType: "commonjs" } },
-  { languageOptions: { globals: globals.node } },
-  pluginJs.configs.recommended,
-  ...tseslint.configs.recommended,
-  prettier,
+  js.configs.recommended, // Base ESLint rules
   {
-    plugins: { prettier: pluginPrettier },
-    rules: { "prettier/prettier": "error" },
+    languageOptions: {
+      globals: globals.node, // Enable Node.js globals
+    },
+    rules: {
+      'prettier/prettier': 'error', // Use Prettier for formatting
+    },
+    plugins: {
+      prettier,
+    },
   },
 ];

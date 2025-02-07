@@ -1,5 +1,10 @@
 const express = require('express');
-const { createCoupon, redeemCoupon, getAllCoupons, getCouponByCode } = require('../controllers/coupon.controller');
+const {
+  createCoupon,
+  redeemCoupon,
+  getAllCoupons,
+  getCouponByCode,
+} = require('../controllers/coupon.controller');
 const { protect } = require('../middlewares/authMiddleware');
 
 const router = express.Router();

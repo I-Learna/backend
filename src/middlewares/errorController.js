@@ -1,5 +1,4 @@
-const AppErr = require("./appErr");
-
+const AppErr = require('./appErr');
 
 const handleErrDBCast = (err) => {
   const message = `The value you enterd is invalid ${err.path}`;
@@ -7,7 +6,7 @@ const handleErrDBCast = (err) => {
 };
 const handleDuplicateFeildDB = (err) => {
   // const value = Object.keys(err.keyValue)[0];
-  const error = Object.keys(err.keyPattern)
+  const error = Object.keys(err.keyPattern);
 
   const message = `This ${error} is already used , try another one...`;
   return new AppErr(message, 400);
@@ -55,10 +54,10 @@ const sendErrDevelpment = (err, res) => {
   });
 };
 
-const errorController = (err, req, res, next) => {
+const errorController = (err, req, res) => {
   console.log(err.message);
   err.statusCode = err.statusCode || 500; //internal server error
-  err.status = err.status
+  err.status;
   if (process.env.NODE_ENV == 'development') {
     sendErrDevelpment(err, res);
   } else if (process.env.NODE_ENV == 'production') {

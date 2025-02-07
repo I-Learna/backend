@@ -1,20 +1,27 @@
 const AppErr = require('../middlewares/appErr');
 const catchAsync = require('../middlewares/catchAsync');
-const Industry = require('../model/industry.model');
 const { formatArabicName, formatEnglishName, capitalizeWords } = require('../utils/slugifyName');
-const { getAll, getById, create, updateById, deleteById, findBySlug, findExact, findBySlugInDiffrentId } = require('../repositories/industry.repository');
+
+const {
+  getAll,
+  getById,
+  create,
+  updateById,
+  deleteById,
+  findBySlug,
+  findBySlugInDiffrentId,
+} = require('../repositories/industry.repository');
 
 exports.getAllIndustries = catchAsync(async (req, res, next) => {
   const industries = await getAll();
-  if (!industries.length) return next(new AppErr('No industries yet', 404))
-  return res.status(200).json({ status: 'success', data: industries })
+  if (!industries.length) return next(new AppErr('No industries yet', 404));
+  return res.status(200).json({ status: 'success', data: industries });
 });
 
 exports.getIndustryById = catchAsync(async (req, res, next) => {
   const industry = await getById(req.params.id);
   if (!industry) return next(new AppErr('Industry not found', 404));
   res.status(200).json({ message: 'success', data: industry });
-
 });
 
 exports.createIndustry = catchAsync(async (req, res, next) => {
@@ -25,7 +32,7 @@ exports.createIndustry = catchAsync(async (req, res, next) => {
   const formattedName = formatEnglishName(name);
 
   // Check if the record already exists with the same name or Arabic name
-  const existingIndustry = await findBySlug(formattedName, formattedNameAr)
+  const existingIndustry = await findBySlug(formattedName, formattedNameAr);
   if (existingIndustry) return next(new AppErr('Industry already exists', 400));
 
   const newIndustry = {
@@ -36,7 +43,6 @@ exports.createIndustry = catchAsync(async (req, res, next) => {
   const industry = await create(newIndustry);
   res.status(201).json({ message: 'Industry created successfully', data: industry });
 });
-
 
 exports.updateIndustry = catchAsync(async (req, res, next) => {
   const { name, name_ar } = req.body;
@@ -56,13 +62,16 @@ exports.updateIndustry = catchAsync(async (req, res, next) => {
   }
 
   // Check if the record exists with the same name or Arabic name in different ID
-  const existingIndustry = await findBySlugInDiffrentId(formattedName, formattedNameAr, req.params.id);
+  const existingIndustry = await findBySlugInDiffrentId(
+    formattedName,
+    formattedNameAr,
+    req.params.id
+  );
   if (existingIndustry) {
     return next(new AppErr('Industry already exists with the same name or Arabic name', 400));
   }
 
-
-  // check if No change in name and Arabic name 
+  // check if No change in name and Arabic name
   if (sameIndustry.slugName === formattedName && sameIndustry.slugName_ar === formattedNameAr) {
     return next(new AppErr('No data change', 400));
   }
@@ -77,11 +86,10 @@ exports.updateIndustry = catchAsync(async (req, res, next) => {
   res.status(200).json({ message: 'success', data: updatedIndustry });
 });
 
-
 exports.deleteIndustry = catchAsync(async (req, res, next) => {
   const industryIsExist = await getById(req.params.id);
   if (!industryIsExist) return next(new AppErr('Industry not found', 404));
 
-  const industry = await deleteById(req.params.id);
+  await deleteById(req.params.id);
   res.status(200).json({ message: 'deleted success' });
 });

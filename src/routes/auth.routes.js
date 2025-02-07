@@ -10,7 +10,7 @@ const router = express.Router();
 
 router.post('/register', validateRequest(userValidationRules), User.registerUser);
 router.get('/activate/:token', User.activateUser);
-router.patch('/admin/user/status', User.updateUserStatus); 
+router.patch('/admin/user/status', User.updateUserStatus);
 router.get('/refresh-token', User.refreshToken);
 router.post('/login', User.loginUser);
 router.get('/logout', User.logoutUser);
@@ -19,20 +19,19 @@ router.post('/reset-password/:resetToken', User.resetPassword);
 router.post('/change-password', protect, User.changePassword);
 
 // Google OAuth routes
-router.get('/google',
-    passport.authenticate('google', { scope: ['profile', 'email'] })
-);
+router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 router.get(
-    '/google/callback',
-    passport.authenticate('google', { failureRedirect: '/' }),
-    User.googleAuth
+  '/google/callback',
+  passport.authenticate('google', { failureRedirect: '/' }),
+  User.googleAuth
 );
 
 // LinkedIn callback
 router.get('/linkedin', passport.authenticate('linkedin'));
-router.get('/linkedin/callback',
-    passport.authenticate('linkedin', { failureRedirect: '/login' }),
-    User.linkedInAuth
+router.get(
+  '/linkedin/callback',
+  passport.authenticate('linkedin', { failureRedirect: '/login' }),
+  User.linkedInAuth
 );
 
 router.post('/assign-role', protect, authorize('updateAny', 'role'), User.assignRole);

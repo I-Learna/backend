@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const { trim } = require('validator');
 const { formatArabicName, formatEnglishName } = require('../utils/slugifyName');
 
 const sectorSchema = new mongoose.Schema(
@@ -43,7 +42,6 @@ const sectorSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-
 sectorSchema.query.excludeFields = function () {
   return this.select('-createdAt -updatedAt -__v');
 };
@@ -59,7 +57,7 @@ sectorSchema.pre('save', function (next) {
   }
   if (this.isModified('name_ar')) {
     // Custom slugify logic to preserve Arabic characters
-    this.slugName_ar = formatArabicName(this.name_ar)
+    this.slugName_ar = formatArabicName(this.name_ar);
   }
   next();
 });

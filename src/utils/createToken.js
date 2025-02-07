@@ -1,4 +1,4 @@
-const jwt = require("jsonwebtoken");
+const jwt = require('jsonwebtoken');
 
 const signToken = (playload) =>
   jwt.sign(playload, process.env.JWT_SECRET, {

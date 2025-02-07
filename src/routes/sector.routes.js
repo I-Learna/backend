@@ -9,16 +9,21 @@ const {
 } = require('../controllers/sector.controller');
 
 const validateRequest = require('../middlewares/validationRequest');
-const { sectorCreateValidationRules, sectorUpdateValidationRules } = require('../validation/sectorValidationRule');
+const {
+  sectorCreateValidationRules,
+  sectorUpdateValidationRules,
+} = require('../validation/sectorValidationRule');
 const validateObjectId = require('../validation/validateObjectId');
 
-router.route('/')
+router
+  .route('/')
   .get(getAllSectors)
-  .post(validateRequest(sectorCreateValidationRules), createSector)
+  .post(validateRequest(sectorCreateValidationRules), createSector);
 
-router.route('/:id')
+router
+  .route('/:id')
   .get(validateRequest(validateObjectId), getSectorById)
   .put(validateRequest(sectorUpdateValidationRules), updateSector)
-  .delete(validateRequest(validateObjectId), deleteSector)
+  .delete(validateRequest(validateObjectId), deleteSector);
 
 module.exports = router;

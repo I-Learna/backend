@@ -4,8 +4,9 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon app.js",
-    "lint": "eslint . --fix && prettier --write ."
-
+    "lint": "eslint . --fix",
+    "format": "prettier --write .",
+    "lint:fix": "npm run lint && npm run format"
   },
   "keywords": [],
   "author": "",
@@ -45,6 +46,7 @@
     "globals": "^15.14.0",
     "nodemon": "^3.1.9",
     "prettier": "^3.4.2",
+    "typescript": "^5.7.3",
     "typescript-eslint": "^8.23.0"
   }
 }

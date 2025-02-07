@@ -24,10 +24,10 @@ const PORT = process.env.PORT || 3000;
 // express-session middleware
 app.use(
   session({
-      secret: 'your_secret_key',
-      resave: false,
-      saveUninitialized: false,
-      cookie: { secure: false } // set true in prod(HTTPS)
+    secret: 'your_secret_key',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: false }, // set true in prod(HTTPS)
   })
 );
 // connect to DB
@@ -56,22 +56,21 @@ app.all('*', (req, res, next) => {
 app.use(errorController);
 
 // Global error handler
-app.use((err, req, res, next) => {
+app.use((err, req, res) => {
   console.error('💥 Error:', err);
-  
+
   const statusCode = err.statusCode || 500;
   const status = err.status || 'error';
 
   res.status(statusCode).json({
-      status,
-      message: err.message || 'Something went wrong!',
+    status,
+    message: err.message || 'Something went wrong!',
   });
 });
 // server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
-
 
 // /ILERNA
 // │

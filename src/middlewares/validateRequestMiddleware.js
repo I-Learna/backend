@@ -1,5 +1,3 @@
-const Joi = require('joi');
-
 /**
  * Validates request data against the provided schema.
  * @param {object} schema - Joi schema for validation.
@@ -7,17 +5,17 @@ const Joi = require('joi');
  * @returns {function} Middleware for validation.
  */
 const validateRequest = (schema, property = 'body') => {
-    return (req, res, next) => {
-        const { error } = schema.validate(req[property], { abortEarly: false }); // Validate and capture all errors
-        if (error) {
-            const errors = error.details.map(detail => ({
-                field: detail.path.join('.'), // Field name
-                message: detail.message, // Validation message
-            }));
-            return res.status(400).json({ errors }); // Send standardized error response
-        }
-        next();
-    };
+  return (req, res, next) => {
+    const { error } = schema.validate(req[property], { abortEarly: false }); // Validate and capture all errors
+    if (error) {
+      const errors = error.details.map((detail) => ({
+        field: detail.path.join('.'), // Field name
+        message: detail.message, // Validation message
+      }));
+      return res.status(400).json({ errors }); // Send standardized error response
+    }
+    next();
+  };
 };
 
 module.exports = validateRequest;
