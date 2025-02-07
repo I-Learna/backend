@@ -1,6 +1,7 @@
 const AppErr = require('../middlewares/appErr');
 const catchAsync = require('../middlewares/catchAsync');
 const User = require('../model/user.model');
+const { Instructor, InstructorRequest } = require('../model/instructor.model');
 const sendEmail = require('../services/email');
 const emailTemplate = require('../services/emailHtml');
 const generateToken = require('../utils/generateToken');
@@ -281,6 +282,98 @@ const changePassword = catchAsync(async (req, res, next) => {
   }
 });
 
+// Request to be Instructor
+const requestInstructor = catchAsync(async (req, res, next) => {
+  try {
+    const { userId } = req.body;
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const existingRequest = await InstructorRequest.findOne({ userId });
+    if (existingRequest)
+      return res.status(400).json({ message: 'You already requested to become an instructor' });
+
+    const newRequest = await InstructorRequest.create({ userId, status: 'pending' });
+    const populatedRequest = await InstructorRequest.findById(newRequest._id)
+      .populate('userId', 'name email')
+      .select('-__v -createdAt -updatedAt');
+
+    res.status(200).json({
+      message: 'Your instructor request has been submitted for approval.',
+      request: populatedRequest,
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+// Admin Approves or Rejects Request
+const reviewInstructorRequest = catchAsync(async (req, res, next) => {
+  try {
+    const { requestId, action } = req.body; // action = 'approve' or 'reject'
+
+    const request = await InstructorRequest.findById(requestId).populate({
+      path: 'userId',
+      select: '+password',
+    });
+
+    if (!request) {
+      return res.status(404).json({ message: 'Request not found' });
+    }
+
+    const user = request.userId;
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (action === 'approve') {
+      // Creating Instructor Account
+      const instructor = await Instructor.create({
+        name: user.name,
+        email: user.email,
+        password: user.password,
+        isEmailVerified: user.isEmailVerified,
+        role: 'Freelancer',
+      });
+
+      // Deleting the Old User Account
+      const deletedUser = await User.findByIdAndDelete(user._id);
+      if (!deletedUser) {
+        return res.status(500).json({ message: 'Failed to delete old user account.' });
+      }
+
+      // Deleting the request after approval
+      await InstructorRequest.findByIdAndDelete(requestId);
+
+      // Send approval email
+      await sendEmail({
+        email: user.email,
+        subject: 'Instructor Request Approved',
+        message:
+          'Congratulations! Your instructor request has been approved. You can now log in as an instructor.',
+      });
+
+      res.status(200).json({ message: 'User is now an instructor.', instructor });
+    } else if (action === 'reject') {
+      // Delete the request
+      await InstructorRequest.findByIdAndDelete(requestId);
+
+      // Send rejection email
+      await sendEmail({
+        email: user.email,
+        subject: 'Instructor Request Rejected',
+        message: 'We’re sorry, but your instructor request has been rejected.',
+      });
+
+      res.status(200).json({ message: 'Instructor request rejected.' });
+    } else {
+      return res.status(400).json({ message: 'Invalid action. Use approve or reject.' });
+    }
+  } catch (error) {
+    return next(error);
+  }
+});
+
 // Role Assignment
 const assignRole = catchAsync(async (req, res, next) => {
   const { userId, role } = req.body;
@@ -344,5 +437,7 @@ module.exports = {
   changePassword,
   forgotPassword,
   resetPassword,
+  requestInstructor,
+  reviewInstructorRequest,
   logoutUser,
 };

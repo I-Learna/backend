@@ -34,6 +34,11 @@ router.get(
   User.linkedInAuth
 );
 
+// Instructor
+router.post('/request-instructor', protect, User.requestInstructor);
+router.post('/review-instructor', protect, User.reviewInstructorRequest);
+
+// Role
 router.post('/assign-role', protect, authorize('updateAny', 'role'), User.assignRole);
 
 module.exports = router;
