@@ -7,7 +7,6 @@ const generateToken = require('../utils/generateToken');
 const { formatName, capitalizeWords } = require('../utils/slugifyName');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
-const { createSendToken } = require('../utils/createSendToken');
 
 // Registration
 const registerUser = catchAsync(async (req, res, next) => {
