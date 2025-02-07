@@ -1,9 +1,9 @@
-const User = require('../model/user.model');
+const userRepository = require('../repositories/user.repository');
 
 exports.getAllUsers = async (req, res, next) => {
   try {
-    const users = await User.find().select('-password -refreshToken -__v -createdAt -updatedAt');
-    res.status(200).json({ Status: 'Success', 'Total Users': users.length, data: users });
+    const users = await userRepository.findAllUsers();
+    res.status(200).json({ Status: 'Success', totalUsers: users.length, data: users });
   } catch (error) {
     return next(error);
   }
@@ -11,9 +11,7 @@ exports.getAllUsers = async (req, res, next) => {
 
 exports.getUserById = async (req, res, next) => {
   try {
-    const user = await User.findById(req.params.id).select(
-      '-password -refreshToken -__v -createdAt -updatedAt'
-    );
+    const user = await userRepository.findUserById(req.params.id);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -26,18 +24,13 @@ exports.getUserById = async (req, res, next) => {
 exports.updateUser = async (req, res, next) => {
   try {
     const { id } = req.params;
-    let updates = req.body;
+    const updates = req.body;
 
-    // Blockin pass update
     if (updates.password) {
       return res.status(400).json({ message: 'Use password reset feature to update password' });
     }
 
-    const user = await User.findByIdAndUpdate(id, updates, {
-      new: true,
-      runValidators: true,
-    }).select('-password -refreshToken');
-
+    const user = await userRepository.updateUserById(id, updates);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -51,7 +44,7 @@ exports.updateUser = async (req, res, next) => {
 exports.deleteUser = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const user = await User.findByIdAndDelete(id);
+    const user = await userRepository.deleteUserById(id);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
