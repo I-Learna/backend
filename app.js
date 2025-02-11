@@ -56,7 +56,8 @@ app.all('*', (req, res, next) => {
 app.use(errorController);
 
 // Global error handler
-app.use((err, req, res) => {
+// add next as a parameter
+app.use((err, req, res, next) => {
   console.error('💥 Error:', err);
 
   const statusCode = err.statusCode || 500;
