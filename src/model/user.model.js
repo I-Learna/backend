@@ -46,14 +46,68 @@ const userSchema = new mongoose.Schema(
     isEmailVerified: { type: Boolean, default: false },
     verificationCode: { type: String, select: false },
     verificationCodeExpires: { type: Date, select: false },
-
     resetPasswordToken: { type: String, select: false, default: null },
     resetPasswordExpires: { type: Date, select: false, default: null },
-
     refreshToken: { type: String, select: false, default: null },
 
-    // Field to track if this user was converted to an instructor
-    isConvertedToInstructor: { type: Boolean, default: false },
+    // Instructor fields
+    bio: {
+      type: String,
+      trim: true,
+      maxlength: [500, 'Bio must be under 500 characters'],
+      default: '',
+    },
+    profileImage: {
+      type: String,
+      default: '',
+    },
+    courses: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Course',
+      },
+    ],
+    socialLinks: {
+      website: {
+        type: String,
+        validate: {
+          validator: function (value) {
+            return !value || /^https?:\/\/.+/.test(value);
+          },
+          message: 'Website must be a valid URL',
+        },
+      },
+      twitter: {
+        type: String,
+        validate: {
+          validator: function (value) {
+            return !value || /^https?:\/\/(www\.)?twitter\.com\/[A-Za-z0-9_]+/.test(value);
+          },
+          message: 'Invalid Twitter URL',
+        },
+      },
+      linkedin: {
+        type: String,
+        validate: {
+          validator: function (value) {
+            return !value || /^https?:\/\/(www\.)?linkedin\.com\/in\/[A-Za-z0-9_-]+/.test(value);
+          },
+          message: 'Invalid LinkedIn URL',
+        },
+      },
+      youtube: {
+        type: String,
+        validate: {
+          validator: function (value) {
+            return (
+              !value ||
+              /^https?:\/\/(www\.)?youtube\.com\/(channel|c|user)\/[A-Za-z0-9_-]+/.test(value)
+            );
+          },
+          message: 'Invalid YouTube URL',
+        },
+      },
+    },
   },
   { timestamps: true }
 );
@@ -75,6 +129,14 @@ userSchema.pre('validate', function (next) {
       this.invalidate('confirmPassword', 'Passwords do not match');
     }
   }
+  next();
+});
+
+userSchema.pre('save', function (next) {
+  if (this.isModified('role')) this.markModified('role');
+  if (this.isModified('bio')) this.markModified('bio');
+  if (this.isModified('profileImage')) this.markModified('profileImage');
+  if (this.isModified('socialLinks')) this.markModified('socialLinks');
   next();
 });
 
