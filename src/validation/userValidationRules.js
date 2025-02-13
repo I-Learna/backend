@@ -1,5 +1,5 @@
 const { body } = require('express-validator');
-const User = require('../model/user.model'); // Adjust the path to your User model
+const User = require('../models/user.model'); // Adjust the path to your User model
 
 const userValidationRules = [
   // Validate name

@@ -1,7 +1,7 @@
 const AppErr = require('../middlewares/appErr');
 const catchAsync = require('../middlewares/catchAsync');
-const User = require('../model/user.model');
-const { InstructorRequest } = require('../model/instructor.model');
+const User = require('../models/user.model');
+const { InstructorRequest } = require('../models/instructor.model');
 const sendEmail = require('../services/email');
 const emailTemplate = require('../services/emailHtml');
 const generateToken = require('../utils/generateToken');

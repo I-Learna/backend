@@ -1,4 +1,4 @@
-const User = require('../model/user.model');
+const User = require('../models/user.model');
 
 const selectFields = '-password -refreshToken -__v -createdAt -updatedAt';
 

@@ -1,4 +1,4 @@
-const Industry = require('../model/industry.model');
+const Industry = require('../models/industry.model');
 
 const getAll = async () => {
   return await Industry.find().excludeFields();
