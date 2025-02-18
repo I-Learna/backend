@@ -1,4 +1,4 @@
-const Sector = require('../model/sector.model');
+const Sector = require('../models/sector.model');
 
 const getAll = async () => {
   return await Sector.find().excludeFields();

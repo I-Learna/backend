@@ -1,7 +1,7 @@
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const LinkedInStrategy = require('passport-linkedin-oauth2').Strategy;
-const User = require('../model/user.model');
+const User = require('../models/user.model');
 const { generateAccessToken, generateRefreshToken } = require('../utils/generateToken');
 
 // Google OAuth Strategy
