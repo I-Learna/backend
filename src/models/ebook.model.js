@@ -9,7 +9,7 @@ const EbookSchema = new mongoose.Schema({
   language: { type: [String], enum: ['english', 'arabic'], required: true },
   translated: { type: String, enum: ['english', 'arabic', 'N/A'], default: 'N/A' },
   video: { type: String },
-  docs: { type: String, required: true },
+  doc: { type: String, required: true },
   price: { type: Number, required: true, min: 0 },
   discount: {
     type: {
@@ -22,7 +22,7 @@ const EbookSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-// Virtual field for calc final price
+// Virtual field for final price calculation
 EbookSchema.virtual('finalPrice').get(function () {
   if (this.discount.type === 'amount') {
     return Math.max(this.price - this.discount.value, 0);
