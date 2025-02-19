@@ -2,21 +2,36 @@ const express = require('express');
 const User = require('../controllers/auth.controller');
 const { protect } = require('../middlewares/authMiddleware');
 const { authorize } = require('../middlewares/rbacMiddleware');
-const userValidationRules = require('../validation/userValidationRules');
+const {
+  userValidationRegistration,
+  userValidationLogin,
+  userValidationEmail,
+  userValidationResetPassword,
+  userValidationChangePassword,
+} = require('../validation/userValidationRules');
 const validateRequest = require('../middlewares/validationRequest');
 const passport = require('../utils/passportConfig');
 
 const router = express.Router();
 
-router.post('/register', validateRequest(userValidationRules), User.registerUser);
+router.post('/register', validateRequest(userValidationRegistration), User.registerUser);
 router.get('/activate/:token', User.activateUser);
 router.patch('/admin/user/status', User.updateUserStatus);
 router.get('/refresh-token', User.refreshToken);
-router.post('/login', User.loginUser);
+router.post('/login', validateRequest(userValidationLogin), User.loginUser);
 router.get('/logout', User.logoutUser);
-router.post('/forget-password', User.forgotPassword);
-router.post('/reset-password/:resetToken', User.resetPassword);
-router.post('/change-password', protect, User.changePassword);
+router.post('/forget-password', validateRequest(userValidationEmail), User.forgotPassword);
+router.post(
+  '/reset-password/:resetToken',
+  validateRequest(userValidationResetPassword),
+  User.resetPassword
+);
+router.post(
+  '/change-password',
+  protect,
+  validateRequest(userValidationChangePassword),
+  User.changePassword
+);
 
 // Google OAuth routes
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
