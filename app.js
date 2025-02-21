@@ -18,6 +18,7 @@ const couponRoutes = require('./src/routes/coupon.routes');
 const videoRoutes = require('./src/routes/video.routes');
 const questionRoutes = require('./src/routes/question.routes');
 const ebookRoutes = require('./src/routes/ebook.routes');
+const courseRoutes = require('./src/routes/course.routes');
 
 dotenv.config();
 const app = express();
@@ -51,6 +52,7 @@ app.use('/api/coupon', couponRoutes);
 app.use('/api/video', videoRoutes);
 app.use('/api', questionRoutes);
 app.use('/api/ebook', ebookRoutes);
+app.use('/api/course', courseRoutes);
 
 // error handler middleware
 app.all('*', (req, res, next) => {
