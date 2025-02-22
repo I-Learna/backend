@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
 
 const EbookSchema = new mongoose.Schema({
-  industry: { type: mongoose.Schema.Types.ObjectId, ref: 'Industry', required: true },
-  sector: { type: mongoose.Schema.Types.ObjectId, ref: 'Sector', required: true },
+  industry: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Industry', required: true }],
+  sector: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Sector', required: true }],
   name: { type: String, required: true, trim: true },
   description: { type: String, required: true },
   mainPhoto: { type: String, required: true },

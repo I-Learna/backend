@@ -108,3 +108,31 @@ module.exports = {
 
 
 ```
+
+### schema for requeste as a freelancer
+
+full name
+professional summary or bio
+phone number
+residence country
+nationality
+date of birth
+industry Id ( many id )
+sector Id ( many id )
+total years of experience
+how did you hear abour ilearna?
+
+have you taught online before ? Y / N default N
+what langauge could you tech ?
+
+profissonal certificate ( array of [ name , attached ] )
+
+resume
+introduce your selfe ( video )
+
+profileImage
+socialLinks
+
+## api route logout : need a middleware protect
+
+## ebooks model change industry , sector to be an array
