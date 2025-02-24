@@ -12,7 +12,7 @@ services:
     env_file:
       - .env
     environment:
-      - MONGODB_URI=mongodb://root:example@mongo:27017/mydb
+      - MONGODB_URI=mongodb://root:example@mongo:27017/ilearna
     networks:
       - internal
       - external
