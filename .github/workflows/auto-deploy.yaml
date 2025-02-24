@@ -27,7 +27,7 @@ jobs:
             cd /opt/backend
             echo "${{ secrets.ENV_FILE }}" | base64 --decode > .env
             gh auth setup-git
-            git checkout add-docker-config
+            git checkout master
             git pull
             docker-compose down
             docker-compose up --build -d
