@@ -12,8 +12,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Decode .env file
-      run: echo "${{ secrets.ENV_FILE }}" | base64 --decode > /opt/backend/.env
     - name: Deploy via SSH
       uses: appleboy/ssh-action@v1.2.0
       with:
@@ -23,6 +21,7 @@ jobs:
         script: |
             set -e
             cd /opt/backend
+            cho "${{ secrets.ENV_FILE }}" | base64 --decode > .env
             gh auth setup-git
             git checkout add-docker-config
             git pull
