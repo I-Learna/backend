@@ -3,14 +3,14 @@ version: '3.8'
 services:
   backend:
     build: .
-    ports:
-      - "5000:3000"
     depends_on:
       mongo:
         condition: service_healthy
+    restart: always
+    env_file:
+      - .env
     environment:
       - MONGO_URI=mongodb://root:example@mongo:27017/mydb
-    restart: always
     networks:
       - internal
       - external

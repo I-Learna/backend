@@ -5,12 +5,15 @@ on:
   push:
     branches:
       - main
+      - add-docker-config
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Decode .env file
+      run: echo "${{ secrets.ENV_FILE }}" | base64 --decode > .env
     - name: Deploy via SSH
       uses: appleboy/ssh-action@v1.2.0
       with:
