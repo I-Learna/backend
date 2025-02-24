@@ -7,6 +7,8 @@ services:
       mongo:
         condition: service_healthy
     restart: always
+    ports:
+      - "7000:7000"
     env_file:
       - .env
     environment:
