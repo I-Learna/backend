@@ -12,7 +12,7 @@ services:
     env_file:
       - .env
     environment:
-      - MONGODB_URI=mongodb://root:example@mongo:27017/ilearna?authSource=admin
+      - MONGODB_URI=${MONGODB_URI}
     networks:
       - internal
       - external
@@ -22,8 +22,8 @@ services:
     ports:
       - "27017:27017"
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=root
-      - MONGO_INITDB_ROOT_PASSWORD=example
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
     volumes:
       - mongo-data:/data/db
     healthcheck:
