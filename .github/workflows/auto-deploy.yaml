@@ -13,7 +13,7 @@ jobs:
 
     steps:
     - name: Decode .env file
-      run: echo "${{ secrets.ENV_FILE }}" | base64 --decode > .env
+      run: echo "${{ secrets.ENV_FILE }}" | base64 --decode > /opt/backend/.env
     - name: Deploy via SSH
       uses: appleboy/ssh-action@v1.2.0
       with:
