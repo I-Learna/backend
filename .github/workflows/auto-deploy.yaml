@@ -24,7 +24,7 @@ jobs:
             set -e
             cd /opt/backend
             gh auth setup-git
-            git checkout main
+            git checkout add-docker-config
             git pull
             docker-compose down
             docker-compose up --build -d
