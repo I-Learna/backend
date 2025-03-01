@@ -293,13 +293,14 @@ const changePassword = catchAsync(async (req, res, next) => {
 const requestInstructor = catchAsync(async (req, res, next) => {
   try {
     const { userId, bio, profileImage, socialLinks } = req.body;
-
+    //  we can use req.user._id instead of userId
     const user = await User.findById(userId).select('-__v -createdAt -updatedAt');
     if (!user) return res.status(404).json({ message: 'User not found' });
-
+    //  if (!user) return (next(new AppErr('User not found', 404)));
     const existingRequest = await InstructorRequest.findOne({ userId });
     if (existingRequest) {
       return res.status(400).json({ message: 'You already requested to become an instructor' });
+      //  if (!existingRequest) return (next(new AppErr('You already requested to become an instructor', 404)));
     }
 
     const newRequest = await InstructorRequest.create({
