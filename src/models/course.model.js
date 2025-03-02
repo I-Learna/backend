@@ -21,6 +21,7 @@ const CourseSchema = new Schema({
   discount: { type: Boolean, default: false },
   coupon: { type: mongoose.Schema.Types.ObjectId, ref: 'Coupon' },
   testVideoUrl: { type: String, required: true },
+  isApproved: { type: Boolean, default: false },
 });
 
 // Unit

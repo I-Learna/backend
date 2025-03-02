@@ -26,6 +26,8 @@ router
   .put(courseController.uploadCourseFiles, courseController.updateCourse)
   .delete(courseController.deleteCourse);
 
+router.put('/:courseId/approve', courseController.approveCourse);
+
 // Session routes
 router
   .route('/:unitId/sessions')

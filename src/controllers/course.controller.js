@@ -325,3 +325,13 @@ exports.deleteSession = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+exports.approveCourse = async (req, res) => {
+  try {
+    const course = await courseRepo.approveCourse(req.params.courseId);
+    if (!course) return res.status(404).json({ error: 'Course not found' });
+    res.status(200).json({ success: true, message: 'Course approved successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};

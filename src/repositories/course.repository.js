@@ -129,3 +129,16 @@ exports.deleteUnit = async (id) => {
 exports.deleteSession = async (id) => {
   return Session.findByIdAndDelete(id);
 };
+
+exports.approveCourse = async (id) => {
+  return Course.findByIdAndUpdate(id, { isApproved: true })
+    .populate('industry', 'name name_ar options')
+    .populate('sector', 'name description')
+    .populate('coupon', 'name')
+    .populate({
+      path: 'units',
+      populate: { path: 'sessions', select: '-__v -createdAt -updatedAt' },
+      select: '-__v -createdAt -updatedAt',
+    })
+    .select('-__v -createdAt -updatedAt');
+};
