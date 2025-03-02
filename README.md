@@ -136,3 +136,63 @@ socialLinks
 ## api route logout : need a middleware protect
 
 ## ebooks model change industry , sector to be an array
+
+## Date 2-Mar-2025
+## course schema
+
+```
+  industry: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Industry', required: true }],
+  sector: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Sector', required: true }],
+
+  testVideoUrl: { type: String, required: true },
+
+```
+## course.controller
+## add videurl testvideo 
+
+```
+exports.createCourse = async (req, res) => {
+  try {
+    const { body, files } = req;
+    const parsedBody = qs.parse(body);
+
+    const mainPhotoUrl = files?.mainPhoto?.[0]?.path || null;
+ 
+    const videoUrl = files.videoUrl
+      ? await uploadToVimeo(files.videoUrl[0].path, files.videoUrl[0].originalname)
+      : null;
+
+    const courseData = { ...parsedBody, mainPhoto: mainPhotoUrl, testVideoUrl: videoUrl };
+
+    const course = await courseRepo.createCourse(courseData);
+
+    res.status(201).json({ message: 'Course created successfully', course: course });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+```
+
+## course.controller createUnit  add check for course_id
+```
+   // check courseId is exist
+    const course = await courseRepo.findCourseById(courseId);
+    if (!course) return res.status(404).json({ error: 'Course not found' });
+
+```
+## course.repository >> find qurey for units take courseId to find the realted course
+```
+exports.findAllUnits = async (courseId) => {
+  return Unit.find({ courseId })
+    .populate('courseId', 'name description')
+    .populate('sessions', 'name duration videoUrl freePreview')
+    .select('-__v -createdAt -updatedAt');
+};
+```
+## course.controller createSession
+```
+  // check if unitId is exist
+    const unit = await courseRepo.findUnitById(unitId);
+    if (!unit) return res.status(404).json({ error: 'Unit not found' });
+
+```

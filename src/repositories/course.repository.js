@@ -53,8 +53,8 @@ exports.findAllCourses = async () => {
     })
     .select('-__v -createdAt -updatedAt');
 };
-exports.findAllUnits = async () => {
-  return Unit.find()
+exports.findAllUnits = async (courseId) => {
+  return Unit.find({ courseId })
     .populate('courseId', 'name description')
     .populate('sessions', 'name duration videoUrl freePreview')
     .select('-__v -createdAt -updatedAt');
