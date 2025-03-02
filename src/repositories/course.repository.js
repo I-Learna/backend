@@ -49,7 +49,8 @@ exports.findAllCourses = async () => {
     .populate('coupon', 'name')
     .populate({
       path: 'units',
-      populate: { path: 'sessions' },
+      select: '-__v -createdAt -updatedAt',
+      populate: { path: 'sessions', select: '-__v -createdAt -updatedAt' },
     })
     .select('-__v -createdAt -updatedAt');
 };
@@ -90,17 +91,41 @@ exports.findSessionById = async (sessionId) => {
     .select('-__v -createdAt -updatedAt');
 };
 
-exports.update = async (id, updateData) => {
-  return Course.findByIdAndUpdate(id, updateData, { new: true, runValidators: true })
+exports.updateCourse = async (id, updateData) => {
+  return Course.findByIdAndUpdate(id, updateData, {
+    new: true,
+    runValidators: true,
+  })
     .populate('industry', 'name name_ar options')
     .populate('sector', 'name description')
     .populate('coupon', 'name')
     .populate({
       path: 'units',
-      populate: { path: 'sessions' },
+      populate: { path: 'sessions', select: '-__v -createdAt -updatedAt' },
     });
+};
+
+exports.updateUnit = async (id, updateData) => {
+  return Unit.findByIdAndUpdate(id, updateData, { new: true, runValidators: true })
+    .populate('courseId', 'name description')
+    .populate('sessions', 'name duration videoUrl freePreview')
+    .select('-__v -createdAt -updatedAt');
+};
+
+exports.updateSession = async (id, updateData) => {
+  return Session.findByIdAndUpdate(id, updateData, { new: true, runValidators: true })
+    .populate('unitId', 'name description')
+    .select('-__v -createdAt -updatedAt');
 };
 
 exports.delete = async (id) => {
   return Course.findByIdAndDelete(id);
+};
+
+exports.deleteUnit = async (id) => {
+  return Unit.findByIdAndDelete(id);
+};
+
+exports.deleteSession = async (id) => {
+  return Session.findByIdAndDelete(id);
 };

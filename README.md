@@ -138,6 +138,7 @@ socialLinks
 ## ebooks model change industry , sector to be an array
 
 ## Date 2-Mar-2025
+
 ## course schema
 
 ```
@@ -147,8 +148,10 @@ socialLinks
   testVideoUrl: { type: String, required: true },
 
 ```
+
 ## course.controller
-## add videurl testvideo 
+
+## add videurl testvideo
 
 ```
 exports.createCourse = async (req, res) => {
@@ -157,7 +160,7 @@ exports.createCourse = async (req, res) => {
     const parsedBody = qs.parse(body);
 
     const mainPhotoUrl = files?.mainPhoto?.[0]?.path || null;
- 
+
     const videoUrl = files.videoUrl
       ? await uploadToVimeo(files.videoUrl[0].path, files.videoUrl[0].originalname)
       : null;
@@ -173,14 +176,17 @@ exports.createCourse = async (req, res) => {
 };
 ```
 
-## course.controller createUnit  add check for course_id
+## course.controller createUnit add check for course_id
+
 ```
    // check courseId is exist
     const course = await courseRepo.findCourseById(courseId);
     if (!course) return res.status(404).json({ error: 'Course not found' });
 
 ```
+
 ## course.repository >> find qurey for units take courseId to find the realted course
+
 ```
 exports.findAllUnits = async (courseId) => {
   return Unit.find({ courseId })
@@ -189,7 +195,9 @@ exports.findAllUnits = async (courseId) => {
     .select('-__v -createdAt -updatedAt');
 };
 ```
+
 ## course.controller createSession
+
 ```
   // check if unitId is exist
     const unit = await courseRepo.findUnitById(unitId);
