@@ -23,8 +23,9 @@ router
 router
   .route('/:courseId/units/:id')
   .get(courseController.getUnitById)
-  .put(courseController.uploadCourseFiles, courseController.updateCourse)
-  .delete(courseController.deleteCourse);
+  .put(courseController.uploadCourseFiles, courseController.updateCourse);
+
+router.delete('/units/:id', courseController.deleteCourse);
 
 router.put('/:courseId/approve', courseController.approveCourse);
 
@@ -37,7 +38,8 @@ router
 router
   .route('/:unitId/sessions/:id')
   .get(courseController.getSessionById)
-  .put(courseController.uploadCourseFiles, courseController.updateCourse)
-  .delete(courseController.deleteCourse);
+  .put(courseController.uploadCourseFiles, courseController.updateCourse);
+
+router.delete('/sessions/:id', courseController.deleteCourse);
 
 module.exports = router;
