@@ -16,7 +16,12 @@ exports.createCourse = async (req, res) => {
 
     const mainPhotoUrl = files?.mainPhoto?.[0]?.path || null;
 
-    const courseData = { ...parsedBody, mainPhoto: mainPhotoUrl };
+    const videoUrl = files.videoUrl
+      ? await uploadToVimeo(files.videoUrl[0].path, files.videoUrl[0].originalname)
+      : null;
+
+    const courseData = { ...parsedBody, mainPhoto: mainPhotoUrl, testVideoUrl: videoUrl };
+
     const course = await courseRepo.createCourse(courseData);
 
     res.status(201).json({ message: 'Course created successfully', course: course });
@@ -29,6 +34,9 @@ exports.createUnit = async (req, res) => {
   try {
     const { courseId } = req.params;
     const { name, description, price, duration } = req.body;
+    // check courseId is exist
+    const course = await courseRepo.findCourseById(courseId);
+    if (!course) return res.status(404).json({ error: 'Course not found' });
 
     const unitData = {
       courseId,
@@ -50,6 +58,10 @@ exports.createSession = async (req, res) => {
     const { unitId } = req.params;
     const { name, duration, freePreview } = req.body;
     const { files } = req;
+
+    // check if unitId is exist
+    const unit = await courseRepo.findUnitById(unitId);
+    if (!unit) return res.status(404).json({ error: 'Unit not found' });
 
     const videoUrl = files.videoUrl
       ? await uploadToVimeo(files.videoUrl[0].path, files.videoUrl[0].originalname)
@@ -75,6 +87,8 @@ exports.createSession = async (req, res) => {
 
 exports.getAllCourses = async (req, res) => {
   try {
+
+
     const courses = await courseRepo.findAllCourses();
     res.status(200).json({ status: 'Success', length: courses.length, courses });
   } catch (error) {
@@ -83,7 +97,12 @@ exports.getAllCourses = async (req, res) => {
 };
 exports.getAllUnits = async (req, res) => {
   try {
-    const courses = await courseRepo.findAllUnits();
+    // check courseId is exist
+    const { courseId } = req.params;
+    const course = await courseRepo.findCourseById(courseId);
+    if (!course) return res.status(404).json({ error: 'Course not found' });
+
+    const courses = await courseRepo.findAllUnits(courseId);
     res.status(200).json({ status: 'Success', length: courses.length, courses });
   } catch (error) {
     res.status(500).json({ error: error.message });
