@@ -1,6 +1,6 @@
 const qs = require('qs');
 const courseRepo = require('../repositories/course.repository');
-const { uploadMultiple, uploadToVimeo } = require('../utils/uploadUtil'); // Import utilities
+const { uploadMultiple, uploadToVimeo } = require('../utils/uploadUtil');
 
 // Middleware for file uploads
 exports.uploadCourseFiles = uploadMultiple([
@@ -12,65 +12,87 @@ exports.uploadCourseFiles = uploadMultiple([
 exports.createCourse = async (req, res) => {
   try {
     const { body, files } = req;
-
     const parsedBody = qs.parse(body);
 
-    const mainPhotoUrl = files.mainPhoto && files.mainPhoto[0] ? files.mainPhoto[0].path : null;
-    const videoUrl =
-      files.videoUrl && files.videoUrl[0]
-        ? await uploadToVimeo(files.videoUrl[0].path, files.videoUrl[0].originalname)
-        : null;
-    const documents =
-      files.documents && files.documents?.length > 0
-        ? files.documents?.map((file) => file.path)
-        : [];
+    const mainPhotoUrl = files?.mainPhoto?.[0]?.path || null;
 
-    const units = [];
-    if (parsedBody.units && Array.isArray(parsedBody.units)) {
-      for (let i = 0; i < parsedBody.units.length; i++) {
-        const unit = {
-          name: parsedBody.units[i].name,
-          description: parsedBody.units[i].description,
-          price: parseFloat(parsedBody.units[i].price),
-          duration: parseFloat(parsedBody.units[i].duration),
-          sessions: [],
-        };
+    const courseData = { ...parsedBody, mainPhoto: mainPhotoUrl };
+    const course = await courseRepo.createCourse(courseData);
 
-        if (parsedBody.units[i].sessions && Array.isArray(parsedBody.units[i].sessions)) {
-          for (let j = 0; j < parsedBody.units[i].sessions.length; j++) {
-            const session = {
-              name: parsedBody.units[i].sessions[j].name,
-              duration: parseFloat(parsedBody.units[i].sessions[j].duration),
-              freePreview: parsedBody.units[i].sessions[j].freePreview === 'true',
-              videoUrl: videoUrl,
-              documents: documents,
-            };
-            unit.sessions.push(session);
-          }
-        }
+    res.status(201).json({ message: 'Course created successfully', course: course });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 
-        units.push(unit);
-      }
-    }
+exports.createUnit = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const { name, description, price, duration } = req.body;
 
-    const courseData = {
-      ...parsedBody,
-      mainPhoto: mainPhotoUrl,
-      units: units,
+    const unitData = {
+      courseId,
+      name,
+      description,
+      price: parseFloat(price),
+      duration: parseFloat(duration),
+    };
+    const unit = await courseRepo.createUnit(unitData);
+
+    res.status(201).json({ message: 'Unit created successfully', unit: unit });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.createSession = async (req, res) => {
+  try {
+    const { unitId } = req.params;
+    const { name, duration, freePreview } = req.body;
+    const { files } = req;
+
+    const videoUrl = files.videoUrl
+      ? await uploadToVimeo(files.videoUrl[0].path, files.videoUrl[0].originalname)
+      : null;
+    const documents = files.documents ? files.documents.map((file) => file.path) : [];
+
+    const sessionData = {
+      unitId,
+      name,
+      duration: parseFloat(duration),
+      freePreview: freePreview === 'true',
+      videoUrl,
+      documents,
     };
 
-    const course = await courseRepo.create(courseData);
-    res.status(201).json(course);
+    const session = await courseRepo.createSession(sessionData);
+
+    res.status(201).json({ message: 'Session created successfully', session: session });
   } catch (error) {
-    console.error(error.message);
     res.status(500).json({ error: error.message });
   }
 };
 
 exports.getAllCourses = async (req, res) => {
   try {
-    const courses = await courseRepo.findAll();
-    res.status(200).json(courses);
+    const courses = await courseRepo.findAllCourses();
+    res.status(200).json({ status: 'Success', length: courses.length, courses });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+exports.getAllUnits = async (req, res) => {
+  try {
+    const courses = await courseRepo.findAllUnits();
+    res.status(200).json({ status: 'Success', length: courses.length, courses });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+exports.getAllSessions = async (req, res) => {
+  try {
+    const courses = await courseRepo.findAllSessions();
+    res.status(200).json({ status: 'Success', length: courses.length, courses });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -78,7 +100,25 @@ exports.getAllCourses = async (req, res) => {
 
 exports.getCourseById = async (req, res) => {
   try {
-    const course = await courseRepo.findById(req.params.id);
+    const course = await courseRepo.findCourseById(req.params.id);
+    if (!course) return res.status(404).json({ error: 'Course not found' });
+    res.status(200).json(course);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+exports.getUnitById = async (req, res) => {
+  try {
+    const course = await courseRepo.findUnitById(req.params.id);
+    if (!course) return res.status(404).json({ error: 'Course not found' });
+    res.status(200).json(course);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+exports.getSessionById = async (req, res) => {
+  try {
+    const course = await courseRepo.findSessionById(req.params.id);
     if (!course) return res.status(404).json({ error: 'Course not found' });
     res.status(200).json(course);
   } catch (error) {
