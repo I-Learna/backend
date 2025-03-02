@@ -1,74 +1,48 @@
 const { Course, Unit, Session } = require('../models/course.model');
 
-exports.create = async (courseData) => {
-  const { units, ...courseFields } = courseData;
-
-  console.log('Received course data:', JSON.stringify(courseData, null, 2));
-
-  const newCourse = new Course(courseFields);
+exports.createCourse = async (courseData) => {
+  const newCourse = new Course(courseData);
   await newCourse.save();
+  return newCourse;
+};
 
-  let totalDuration = 0;
-  let totalSessions = 0;
-  let totalUnits = 0;
-  let totalPrice = 0;
+exports.createUnit = async (unitData) => {
+  const newUnit = new Unit(unitData);
+  await newUnit.save();
 
-  let savedUnits = [];
+  const course = await Course.findById(unitData.courseId);
+  if (course) {
+    course.units.push(newUnit._id);
+    course.totalUnits += 1;
+    course.price += newUnit.price;
+    course.totalDuration += newUnit.duration;
+    await course.save();
+  }
 
-  if (units && Array.isArray(units)) {
-    console.log('Received units:', JSON.stringify(units, null, 2));
+  return newUnit;
+};
 
-    for (let unit of units) {
-      const newUnit = new Unit({
-        ...unit,
-        courseId: newCourse._id,
-      });
+exports.createSession = async (sessionData) => {
+  const newSession = new Session(sessionData);
+  await newSession.save();
 
-      let sessionIds = [];
+  const unit = await Unit.findById(sessionData.unitId);
+  if (unit) {
+    unit.sessions.push(newSession._id);
+    await unit.save();
 
-      if (unit.sessions && Array.isArray(unit.sessions)) {
-        console.log('Received sessions:', JSON.stringify(unit.sessions, null, 2));
-
-        for (let session of unit.sessions) {
-          const newSession = new Session({
-            ...session,
-            unitId: newUnit._id,
-          });
-          await newSession.save();
-          sessionIds.push(newSession._id);
-
-          totalSessions++;
-          totalDuration += newSession.duration;
-        }
-      }
-
-      newUnit.sessions = sessionIds;
-      await newUnit.save();
-      savedUnits.push(newUnit._id);
-
-      totalUnits++;
-      totalPrice += newUnit.price;
-      totalDuration += newUnit.duration;
+    const course = await Course.findById(unit.courseId);
+    if (course) {
+      course.totalSessions += 1;
+      course.totalDuration += newSession.duration;
+      await course.save();
     }
   }
 
-  newCourse.units = savedUnits;
-  newCourse.totalDuration = totalDuration;
-  newCourse.totalSessions = totalSessions;
-  newCourse.totalUnits = totalUnits;
-  newCourse.price = totalPrice;
-
-  await newCourse.save();
-
-  return Course.findById(newCourse._id)
-    .populate('industry sector coupon')
-    .populate({
-      path: 'units',
-      populate: { path: 'sessions' },
-    });
+  return newSession;
 };
 
-exports.findAll = async () => {
+exports.findAllCourses = async () => {
   return Course.find()
     .populate('industry', 'name name_ar options')
     .populate('sector', 'name description')
@@ -76,18 +50,44 @@ exports.findAll = async () => {
     .populate({
       path: 'units',
       populate: { path: 'sessions' },
-    });
+    })
+    .select('-__v -createdAt -updatedAt');
+};
+exports.findAllUnits = async () => {
+  return Unit.find()
+    .populate('courseId', 'name description')
+    .populate('sessions', 'name duration videoUrl freePreview')
+    .select('-__v -createdAt -updatedAt');
 };
 
-exports.findById = async (id) => {
+exports.findAllSessions = async () => {
+  return Session.find().populate('unitId', 'name description').select('-__v -createdAt -updatedAt');
+};
+
+exports.findCourseById = async (id) => {
   return Course.findById(id)
     .populate('industry', 'name name_ar options')
     .populate('sector', 'name description')
     .populate('coupon', 'name')
     .populate({
       path: 'units',
-      populate: { path: 'sessions' },
-    });
+      populate: { path: 'sessions', select: '-__v -createdAt -updatedAt' },
+      select: '-__v -createdAt -updatedAt',
+    })
+    .select('-__v -createdAt -updatedAt');
+};
+
+exports.findUnitById = async (unitId) => {
+  return Unit.findById(unitId)
+    .populate('courseId', 'name description')
+    .populate('sessions', 'name duration videoUrl freePreview')
+    .select('-__v -createdAt -updatedAt');
+};
+
+exports.findSessionById = async (sessionId) => {
+  return Session.findById(sessionId)
+    .populate('unitId', 'name description')
+    .select('-__v -createdAt -updatedAt');
 };
 
 exports.update = async (id, updateData) => {

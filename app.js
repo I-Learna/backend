@@ -63,7 +63,7 @@ app.use(errorController);
 
 // Global error handler
 // add next as a parameter
-app.use((err, req, res, next) => {
+app.use((err, req, res) => {
   console.error('💥 Error:', err);
 
   const statusCode = err.statusCode || 500;
