@@ -37,7 +37,7 @@ exports.createUnit = async (req, res) => {
     // check courseId is exist
     const course = await courseRepo.findCourseById(courseId);
     if (!course) return res.status(404).json({ error: 'Course not found' });
-
+    if (!course.isApproved) return res.status(403).json({ error: 'Course must be approved first' });
     const unitData = {
       courseId,
       name,
@@ -331,6 +331,131 @@ exports.approveCourse = async (req, res) => {
     const course = await courseRepo.approveCourse(req.params.courseId);
     if (!course) return res.status(404).json({ error: 'Course not found' });
     res.status(200).json({ success: true, message: 'Course approved successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.publishCourse = async (req, res) => {
+  try {
+    const course = await courseRepo.publishCourse(req.params.courseId);
+    if (!course) return res.status(404).json({ error: 'Course not found' });
+    res.status(200).json({ success: true, message: 'Course Published successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.createReview = async (req, res) => {
+  try {
+    const { refId, refType, review, rating } = req.body;
+
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    if (!refId || !refType || !review || !rating) {
+      return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    const reviewData = {
+      userId: req.user._id,
+      refId,
+      refType,
+      review,
+      rating,
+    };
+
+    const newReview = await courseRepo.createReview(reviewData);
+
+    res.status(201).json({ message: 'Review added successfully', review: newReview });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getReviews = async (req, res) => {
+  try {
+    const { refId, refType } = req.params;
+
+    if (!refId || !refType) {
+      return res.status(400).json({ error: 'refId and refType are required' });
+    }
+
+    const reviews = await courseRepo.getReviews(refId, refType);
+
+    res.status(200).json({ status: 'success', total: reviews.length, reviews });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.createQuestion = async (req, res) => {
+  try {
+    const { refId, refType, question } = req.body;
+
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    if (!refId || !refType || !question) {
+      return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    const questionData = {
+      refId,
+      refType,
+      question,
+      askedBy: req.user._id,
+    };
+
+    const newQuestion = await courseRepo.createQuestion(questionData);
+
+    res.status(201).json({ message: 'Question added successfully', question: newQuestion });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.addAnswer = async (req, res) => {
+  try {
+    const { qaId } = req.params;
+    const { answer } = req.body;
+
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    if (!answer) {
+      return res.status(400).json({ error: 'Answer is required' });
+    }
+
+    const answerData = {
+      answer,
+      answeredBy: req.user._id,
+    };
+    if (req.user.role !== 'Freelancer') {
+      return res.status(403).json({ error: 'Only Instructors can add answers' });
+    }
+    const updatedQA = await courseRepo.addAnswer(qaId, answerData);
+
+    res.status(200).json({ message: 'Answer added successfully', updatedQA });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getQuestions = async (req, res) => {
+  try {
+    const { refId, refType } = req.params;
+
+    if (!refId || !refType) {
+      return res.status(400).json({ error: 'refId and refType are required' });
+    }
+
+    const questions = await courseRepo.getQuestions(refId, refType);
+
+    res.status(200).json({ status: 'success', total: questions.length, questions });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

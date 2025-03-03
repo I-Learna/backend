@@ -1,4 +1,4 @@
-const { Course, Unit, Session } = require('../models/course.model');
+const { Course, Unit, Session, Review, QA } = require('../models/course.model');
 
 exports.createCourse = async (courseData) => {
   const newCourse = new Course(courseData);
@@ -140,5 +140,51 @@ exports.approveCourse = async (id) => {
       populate: { path: 'sessions', select: '-__v -createdAt -updatedAt' },
       select: '-__v -createdAt -updatedAt',
     })
+    .select('-__v -createdAt -updatedAt');
+};
+
+exports.publishCourse = async (id) => {
+  return Course.findByIdAndUpdate(id, { isPublished: true })
+    .populate('industry', 'name name_ar options')
+    .populate('sector', 'name description')
+    .populate('coupon', 'name')
+    .populate({
+      path: 'units',
+      populate: { path: 'sessions', select: '-__v -createdAt -updatedAt' },
+      select: '-__v -createdAt -updatedAt',
+    })
+    .select('-__v -createdAt -updatedAt');
+};
+
+exports.createReview = async (reviewData) => {
+  const newReview = new Review(reviewData);
+  await newReview.save();
+  return newReview
+    .populate('userId', 'name role profileImage createdAt')
+    .select('-__v -createdAt -updatedAt');
+};
+
+exports.getReviews = async (refId, refType) => {
+  return Review.find({ refId, refType })
+    .populate('userId', 'name role profileImage createdAt')
+    .select('-__v -createdAt -updatedAt');
+};
+
+exports.createQuestion = async (questionData) => {
+  const newQuestion = new QA(questionData);
+  await newQuestion.save();
+  return newQuestion.populate('askedBy', 'name role profileImage createdAt');
+};
+
+exports.addAnswer = async (qaId, answerData) => {
+  return QA.findByIdAndUpdate(qaId, { $push: { answers: answerData } }, { new: true })
+    .populate('answers.answeredBy', 'name role profileImage createdAt')
+    .select('-__v -createdAt -updatedAt');
+};
+
+exports.getQuestions = async (refId, refType) => {
+  return QA.find({ refId, refType })
+    .populate('askedBy', 'name role profileImage createdAt')
+    .populate('answers.answeredBy', 'name role profileImage createdAt')
     .select('-__v -createdAt -updatedAt');
 };
