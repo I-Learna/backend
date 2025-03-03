@@ -3,8 +3,8 @@ const { Schema } = mongoose;
 
 // Course
 const CourseSchema = new Schema({
-  industry: [{ type: Schema.Types.ObjectId, ref: 'Industry', required: true }],
-  sector: [{ type: Schema.Types.ObjectId, ref: 'Sector', required: true }],
+  industry: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Industry', required: true }],
+  sector: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Sector', required: true }],
   name: { type: String, required: true },
   description: { type: String, required: true },
   mainPhoto: { type: String, required: true },
@@ -19,7 +19,7 @@ const CourseSchema = new Schema({
   totalUnits: { type: Number, default: 0 },
   price: { type: Number, default: 0 },
   discount: { type: Boolean, default: false },
-  coupon: { type: Schema.Types.ObjectId, ref: 'Coupon' },
+  coupon: { type: mongoose.Schema.Types.ObjectId, ref: 'Coupon' },
   testVideoUrl: { type: String, required: true },
   isApproved: { type: Boolean, default: false },
   isPublished: { type: Boolean, default: false },
