@@ -28,20 +28,22 @@ const handleValidationDB = (err) => {
 };
 
 const sendErrProduction = (err, res) => {
-  if (err.isOpretional) {
-    console.log(err);
+  //  operatinoal , trusted error : send message to client
+  if (err.isOperational) {
     res.status(err.statusCode).json({
       status: err.status,
       message: err.message,
     });
   } else {
-    //log the error
-    console.log('error', err.message);
-    // send a dummy res to the client
+    // log error
+    console.error('Error ❌', err);
+
+    // send generic message
+
     res.status(500).json({
       status: 'error',
-      message: 'something went wrong',
-    });
+      message: 'Something went wrong'
+    })
   }
 };
 const sendErrDevelpment = (err, res) => {
@@ -54,21 +56,21 @@ const sendErrDevelpment = (err, res) => {
   });
 };
 
-const errorController = (err, req, res) => {
-  console.log(err.message);
-  err.statusCode = err.statusCode || 500; //internal server error
-  err.status;
+module.exports = (err, req, res, next) => {
+  // console.log(err.message);
+  err.statusCode = err.statusCode || 500;
+  err.status = err.status || 'error';
+
   if (process.env.NODE_ENV == 'development') {
     sendErrDevelpment(err, res);
   } else if (process.env.NODE_ENV == 'production') {
     // let err = JSON.parse(JSON.stringify(err))
-    if (err.name === 'CastError') err = handleErrDBCast(err); //for requesting wrong id
-    if (err.code === 11000) err = handleDuplicateFeildDB(err); // post the same name of tour
-    if (err.name === 'ValidationError') err = handleValidationDB(err); //vlidtion error
-    if (err.name === 'JsonWebTokenError') err = handleJwt(err); //vlidtion error
-    if (err.name === 'TokenExpiredError') err = handleJwtExpiration(); // err expiration time for the token
-    sendErrProduction(err, res);
+    let error = { ...err }
+    if (error.name === 'CastError') error = handleErrDBCast(error); //for requesting wrong id
+    if (error.code === 11000) error = handleDuplicateFeildDB(error); // post the same name of tour
+    if (error.name === 'ValidationError') error = handleValidationDB(error); //vlidtion error
+    if (error.name === 'JsonWebTokenError') error = handleJwt(); //vlidtion error
+    if (error.name === 'TokenExpiredError') error = handleJwtExpiration(); // err expiration time for the token
+    sendErrProduction(error, res);
   }
 };
-
-module.exports = errorController;

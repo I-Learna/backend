@@ -6,7 +6,15 @@ const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const connectDB = require('./config/db');
 const AppErr = require('./src/middlewares/appErr');
-const errorController = require('./src/middlewares/errorController');
+const globalErrorHandler = require('./src/middlewares/errorController');
+
+process.on('uncaughtException', err => {
+  console.log('UNCAUGHT REJECTION! 💥 Shutting down...');
+  console.log(err.name, err.message);
+  process.exit(1);
+})
+
+
 
 // routes importing
 const authRoutes = require('./src/routes/auth.routes');
@@ -59,25 +67,36 @@ app.all('*', (req, res, next) => {
   next(new AppErr(`cannot find this ${req.originalUrl} on the server`, 404));
 });
 
-app.use(errorController);
+app.use(globalErrorHandler);
 
 // Global error handler
 // add next as a parameter
-app.use((err, req, res) => {
-  console.error('💥 Error:', err);
+// app.use((err, req, res) => {
+//   console.error('💥 Error:', err);
 
-  const statusCode = err.statusCode || 500;
-  const status = err.status || 'error';
+//   const statusCode = err.statusCode || 500;
+//   const status = err.status || 'error';
 
-  res.status(statusCode).json({
-    status,
-    message: err.message || 'Something went wrong!',
-  });
-});
+//   res.status(statusCode).json({
+//     status,
+//     message: err.message || 'Something went wrong!',
+//   });
+// });
 // server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
+
+
+
+process.on('unhandledRejection', err => {
+  console.log('UNHANDLED REJECTION! 💥 Shutting down...');
+  console.log(err.name, err.message);
+  server.close(() => {
+    process.exit(1);
+  });
+});
+
 
 // /ILERNA
 // │

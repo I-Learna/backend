@@ -23,7 +23,7 @@ const CourseSchema = new Schema({
   testVideoUrl: { type: String, required: true },
   isApproved: { type: Boolean, default: false },
   isPublished: { type: Boolean, default: false },
-  rating: { type: Number, min: 1, max: 5, default: 0 },
+  rating: { type: Number, min: 0, max: 5, default: 0 },
   reviews: [{ type: Schema.Types.ObjectId, ref: 'Review', default: [] }],
   qna: [{ type: Schema.Types.ObjectId, ref: 'QA', default: [] }],
 });
@@ -36,7 +36,7 @@ const UnitSchema = new Schema({
   price: { type: Number, required: true },
   duration: { type: Number, required: true },
   sessions: [{ type: Schema.Types.ObjectId, ref: 'Session', default: [] }],
-  rating: { type: Number, min: 1, max: 5, default: 0 },
+  rating: { type: Number, min: 0, max: 5, default: 0 },
   reviews: [{ type: Schema.Types.ObjectId, ref: 'Review', default: [] }],
   qna: [{ type: Schema.Types.ObjectId, ref: 'QA', default: [] }],
 });
@@ -57,7 +57,7 @@ const ReviewSchema = new Schema({
   refId: { type: Schema.Types.ObjectId, required: true },
   refType: { type: String, enum: ['course', 'unit'], required: true },
   review: { type: String, required: true },
-  rating: { type: Number, min: 1, max: 5, default: 0 },
+  rating: { type: Number, min: 1, max: 5, default: 1 },
   createdAt: { type: Date, default: Date.now },
 });
 

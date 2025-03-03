@@ -47,6 +47,10 @@ const findExact = async (id, name) => {
   return await Industry.findOne({ _id: id, slugName: name });
 };
 
+const findIndustryIdsIsExist = async (industryIds) => {
+  return await Industry.find({ _id: { $in: industryIds } });
+};
+
 module.exports = {
   getAll,
   getById,
@@ -56,4 +60,5 @@ module.exports = {
   findBySlug,
   findExact,
   findBySlugInDiffrentId,
+  findIndustryIdsIsExist
 };

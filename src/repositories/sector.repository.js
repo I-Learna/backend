@@ -47,6 +47,10 @@ const findExact = async (id, name) => {
   return await Sector.findOne({ _id: id, slugName: name });
 };
 
+const findSectorIdsIsExist = async (ids) => {
+  return await Sector.find({ _id: { $in: ids } });
+};
+
 module.exports = {
   getAll,
   getById,
@@ -56,4 +60,5 @@ module.exports = {
   findBySlug,
   findExact,
   findBySlugInDiffrentId,
+  findSectorIdsIsExist
 };

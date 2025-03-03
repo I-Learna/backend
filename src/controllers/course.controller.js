@@ -1,6 +1,11 @@
 const qs = require('qs');
 const courseRepo = require('../repositories/course.repository');
+const industryRepo = require('../repositories/industry.repository');
+const sectorRepo = require('../repositories/sector.repository');
+
 const { uploadMultiple, uploadToVimeo } = require('../utils/uploadUtil');
+const catchAsync = require('../middlewares/catchAsync');
+const AppErr = require('../middlewares/appErr');
 
 // Middleware for file uploads
 exports.uploadCourseFiles = uploadMultiple([
@@ -9,35 +14,42 @@ exports.uploadCourseFiles = uploadMultiple([
   { name: 'documents', maxCount: 10 },
 ]);
 
-exports.createCourse = async (req, res) => {
-  try {
-    const { body, files } = req;
-    const parsedBody = qs.parse(body);
+exports.createCourse = catchAsync(async (req, res, next) => {
 
-    const mainPhotoUrl = files?.mainPhoto?.[0]?.path || null;
+  const { body, files } = req;
+  const parsedBody = qs.parse(body);
+  // check if req.body.industry is exist in industry model
+  const industry = await industryRepo.findIndustryIdsIsExist(parsedBody.industry);
+  console.log(industry);
+  if (industry.length === 0) return next(new AppErr('Industry is not found', 404));
 
-    const videoUrl = files.videoUrl
-      ? await uploadToVimeo(files.videoUrl[0].path, files.videoUrl[0].originalname)
-      : null;
+  // check if req.body.sector is exist in sector model
+  const sector = await sectorRepo.findSectorIdsIsExist(parsedBody.sector);
+  console.log(sector);
+  if (sector.length === 0) return next(new AppErr('Sector is not found', 404));
 
-    const courseData = { ...parsedBody, mainPhoto: mainPhotoUrl, testVideoUrl: videoUrl };
+  const mainPhotoUrl = files?.mainPhoto?.[0]?.path || null;
 
-    const course = await courseRepo.createCourse(courseData);
+  const videoUrl = files.videoUrl
+    ? await uploadToVimeo(files.videoUrl[0].path, files.videoUrl[0].originalname)
+    : null;
 
-    res.status(201).json({ message: 'Course created successfully', course: course });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+  const courseData = { ...parsedBody, mainPhoto: mainPhotoUrl, testVideoUrl: videoUrl };
 
-exports.createUnit = async (req, res) => {
+  const course = await courseRepo.createCourse(courseData);
+
+  res.status(201).json({ message: 'Course created successfully', course: course });
+
+});
+
+exports.createUnit = catchAsync(async (req, res, next) => {
   try {
     const { courseId } = req.params;
     const { name, description, price, duration } = req.body;
     // check courseId is exist
     const course = await courseRepo.findCourseById(courseId);
-    if (!course) return res.status(404).json({ error: 'Course not found' });
-    if (!course.isApproved) return res.status(403).json({ error: 'Course must be approved first' });
+    if (!course) return next(new AppErr('Course not found', 404));
+    if (!course.isApproved) return next(new AppErr('Course is not approved', 403));
     const unitData = {
       courseId,
       name,
@@ -51,97 +63,75 @@ exports.createUnit = async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
-};
+});
 
-exports.createSession = async (req, res) => {
-  try {
-    const { unitId } = req.params;
-    const { name, duration, freePreview } = req.body;
-    const { files } = req;
+exports.createSession = catchAsync(async (req, res, next) => {
 
-    // check if unitId is exist
-    const unit = await courseRepo.findUnitById(unitId);
-    if (!unit) return res.status(404).json({ error: 'Unit not found' });
+  const { unitId } = req.params;
+  const { name, duration, freePreview } = req.body;
+  const { files } = req;
 
-    const videoUrl = files.videoUrl
-      ? await uploadToVimeo(files.videoUrl[0].path, files.videoUrl[0].originalname)
-      : null;
-    const documents = files.documents ? files.documents.map((file) => file.path) : [];
+  // check if unitId is exist
+  const unit = await courseRepo.findUnitById(unitId);
+  if (!unit) return next(new AppErr('Unit not found', 404));
 
-    const sessionData = {
-      unitId,
-      name,
-      duration: parseFloat(duration),
-      freePreview: freePreview === 'true',
-      videoUrl,
-      documents,
-    };
+  const videoUrl = files.videoUrl
+    ? await uploadToVimeo(files.videoUrl[0].path, files.videoUrl[0].originalname)
+    : null;
+  const documents = files.documents ? files.documents.map((file) => file.path) : [];
 
-    const session = await courseRepo.createSession(sessionData);
+  const sessionData = {
+    unitId,
+    name,
+    duration: parseFloat(duration),
+    freePreview: freePreview === 'true',
+    videoUrl,
+    documents,
+  };
 
-    res.status(201).json({ message: 'Session created successfully', session: session });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+  const session = await courseRepo.createSession(sessionData);
 
-exports.getAllCourses = async (req, res) => {
-  try {
-    const courses = await courseRepo.findAllCourses();
-    res.status(200).json({ status: 'Success', length: courses.length, courses });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-exports.getAllUnits = async (req, res) => {
-  try {
-    // check courseId is exist
-    const { courseId } = req.params;
-    const course = await courseRepo.findCourseById(courseId);
-    if (!course) return res.status(404).json({ error: 'Course not found' });
+  res.status(201).json({ message: 'Session created successfully', session: session });
 
-    const courses = await courseRepo.findAllUnits(courseId);
-    res.status(200).json({ status: 'Success', length: courses.length, courses });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-exports.getAllSessions = async (req, res) => {
-  try {
-    const courses = await courseRepo.findAllSessions();
-    res.status(200).json({ status: 'Success', length: courses.length, courses });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+});
 
-exports.getCourseById = async (req, res) => {
-  try {
-    const course = await courseRepo.findCourseById(req.params.id);
-    if (!course) return res.status(404).json({ error: 'Course not found' });
-    res.status(200).json(course);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-exports.getUnitById = async (req, res) => {
-  try {
-    const course = await courseRepo.findUnitById(req.params.id);
-    if (!course) return res.status(404).json({ error: 'Course not found' });
-    res.status(200).json(course);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-exports.getSessionById = async (req, res) => {
-  try {
-    const course = await courseRepo.findSessionById(req.params.id);
-    if (!course) return res.status(404).json({ error: 'Course not found' });
-    res.status(200).json(course);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+exports.getAllCourses = catchAsync(async (req, res, next) => {
+  const courses = await courseRepo.findAllCourses();
+  if (!courses) return next(new AppErr('Courses not found', 404));
+  res.status(200).json({ status: 'Success', length: courses.length, courses });
+
+});
+exports.getAllUnits = catchAsync(async (req, res) => {
+  // check courseId is exist
+  const { courseId } = req.params;
+  const course = await courseRepo.findCourseById(courseId);
+  if (!course) return next(new AppErr('Course not found', 404));
+  const courses = await courseRepo.findAllUnits(courseId);
+  res.status(200).json({ status: 'Success', length: courses.length, courses });
+});
+exports.getAllSessions = catchAsync(async (req, res, next) => {
+  const courses = await courseRepo.findAllSessions();
+  if (!courses) return next(new AppErr('Courses not found', 404));
+  res.status(200).json({ status: 'Success', length: courses.length, courses });
+
+});
+
+exports.getCourseById = catchAsync(async (req, res, next) => {
+  const course = await courseRepo.findCourseById(req.params.id);
+  if (!course) return next(new AppErr('Course not found', 404));
+  res.status(200).json(course);
+
+});
+exports.getUnitById = catchAsync(async (req, res, next) => {
+  const course = await courseRepo.findUnitById(req.params.id);
+  if (!course) return next(new AppErr('Course not found', 404));
+  res.status(200).json(course);
+});
+exports.getSessionById = catchAsync(async (req, res, next) => {
+  const course = await courseRepo.findSessionById(req.params.id);
+  if (!course) return next(new AppErr('Course not found', 404));
+  res.status(200).json(course);
+});
 
 exports.updateCourse = async (req, res) => {
   try {
@@ -326,15 +316,12 @@ exports.deleteSession = async (req, res) => {
   }
 };
 
-exports.approveCourse = async (req, res) => {
-  try {
-    const course = await courseRepo.approveCourse(req.params.courseId);
-    if (!course) return res.status(404).json({ error: 'Course not found' });
-    res.status(200).json({ success: true, message: 'Course approved successfully' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+exports.approveCourse = catchAsync(async (req, res, next) => {
+  const course = await courseRepo.approveCourse(req.params.courseId);
+  if (!course) return next(new AppErr('Course not found', 404));
+  res.status(200).json({ success: true, message: 'Course approved successfully' });
+
+});
 
 exports.publishCourse = async (req, res) => {
   try {

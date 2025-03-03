@@ -204,3 +204,38 @@ exports.findAllUnits = async (courseId) => {
     if (!unit) return res.status(404).json({ error: 'Unit not found' });
 
 ```
+
+
+## industry.repository
+
+```
+
+const findIndustryIdsIsExist = async (industryIds) => {
+  return await Industry.find({ _id: { $in: industryIds } });
+};
+
+```
+
+## sector.repository 
+
+```
+const findSectorIdsIsExist = async (ids) => {
+  return await Sector.find({ _id: { $in: ids } });
+};
+
+```
+
+## update course controller createCourse
+## check if industry and sectore are exists
+
+```
+  // check if req.body.industry is exist in industry model
+  const industry = await industryRepo.findIndustryIdsIsExist(parsedBody.industry);
+  if (!industry) return res.status(404).json({ error: 'Industry not found' });
+
+  // check if req.body.sector is exist in sector model
+  const sector = await sectorRepo.findSectorIdsIsExist(parsedBody.sector);
+  if (!sector) return res.status(404).json({ error: 'Sector not found' });
+
+
+```
