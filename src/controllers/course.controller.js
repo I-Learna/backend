@@ -101,18 +101,23 @@ exports.getAllCourses = catchAsync(async (req, res, next) => {
   res.status(200).json({ status: 'Success', length: courses.length, courses });
 
 });
-exports.getAllUnits = catchAsync(async (req, res) => {
+exports.getAllUnits = catchAsync(async (req, res, next) => {
   // check courseId is exist
   const { courseId } = req.params;
   const course = await courseRepo.findCourseById(courseId);
   if (!course) return next(new AppErr('Course not found', 404));
-  const courses = await courseRepo.findAllUnits(courseId);
-  res.status(200).json({ status: 'Success', length: courses.length, courses });
+  const units = await courseRepo.findAllUnits(courseId);
+  res.status(200).json({ status: 'Success', length: units.length, units });
 });
 exports.getAllSessions = catchAsync(async (req, res, next) => {
-  const courses = await courseRepo.findAllSessions();
-  if (!courses) return next(new AppErr('Courses not found', 404));
-  res.status(200).json({ status: 'Success', length: courses.length, courses });
+  // check if unitId is exist
+  const { unitId } = req.params;
+  const unit = await courseRepo.findUnitById(unitId);
+  if (!unit) return next(new AppErr('Unit not found', 404));
+
+  const sessions = await courseRepo.findAllSessions(unitId);
+  if (sessions.length === 0) return next(new AppErr('Sessions not found', 404));
+  res.status(200).json({ status: 'Success', length: sessions.length, sessions });
 
 });
 
@@ -133,53 +138,50 @@ exports.getSessionById = catchAsync(async (req, res, next) => {
   res.status(200).json(course);
 });
 
-exports.updateCourse = async (req, res) => {
-  try {
-    const { body, files } = req;
-    const { id } = req.params;
+exports.updateCourse = catchAsync(async (req, res, next) => {
 
-    const parsedBody = qs.parse(body);
+  const { body, files } = req;
+  const { id } = req.params;
 
-    const mainPhotoUrl = files?.mainPhoto?.[0]?.path || parsedBody.mainPhoto || null;
-    const videoUrl = files?.videoUrl?.[0]
-      ? await uploadToVimeo(files.videoUrl[0].path, files.videoUrl[0].originalname)
-      : parsedBody.videoUrl || null;
-    const documents = files?.documents?.length ? files.documents.map((file) => file.path) : [];
+  const parsedBody = qs.parse(body);
 
-    const units =
-      parsedBody.units?.map((unit) => ({
-        ...unit,
-        price: parseFloat(unit.price),
-        duration: parseFloat(unit.duration),
-        sessions:
-          unit.sessions?.map((session) => ({
-            ...session,
-            duration: parseFloat(session.duration),
-            freePreview: session.freePreview === 'true',
-            videoUrl,
-            documents,
-          })) || [],
-      })) || [];
+  const mainPhotoUrl = files?.mainPhoto?.[0]?.path || parsedBody.mainPhoto || null;
+  const videoUrl = files?.videoUrl?.[0]
+    ? await uploadToVimeo(files.videoUrl[0].path, files.videoUrl[0].originalname)
+    : parsedBody.videoUrl || null;
+  const documents = files?.documents?.length ? files.documents.map((file) => file.path) : [];
 
-    const updateData = {
-      ...parsedBody,
-      mainPhoto: mainPhotoUrl,
-      videoUrl,
-      documents,
-      units,
-    };
+  const units =
+    parsedBody.units?.map((unit) => ({
+      ...unit,
+      price: parseFloat(unit.price),
+      duration: parseFloat(unit.duration),
+      sessions:
+        unit.sessions?.map((session) => ({
+          ...session,
+          duration: parseFloat(session.duration),
+          freePreview: session.freePreview === 'true',
+          videoUrl,
+          documents,
+        })) || [],
+    })) || [];
 
-    // Update course in database
-    const course = await courseRepo.updateCourse(id, updateData);
+  const updateData = {
+    ...parsedBody,
+    mainPhoto: mainPhotoUrl,
+    videoUrl,
+    documents,
+    units,
+  };
 
-    if (!course) return res.status(404).json({ error: 'Course not found' });
+  // Update course in database
+  const course = await courseRepo.updateCourse(id, updateData);
 
-    res.status(200).json({ message: 'Course updated successfully', course });
-  } catch (error) {
-    console.error(error.message);
-    res.status(500).json({ error: error.message });
-  }
-};
+  if (!course) return next(new AppErr('Course not found', 404));
+
+  res.status(200).json({ message: 'Course updated successfully', course });
+
+});
 
 exports.updateUnit = async (req, res) => {
   try {
@@ -317,21 +319,26 @@ exports.deleteSession = async (req, res) => {
 };
 
 exports.approveCourse = catchAsync(async (req, res, next) => {
+  // check courseId is exist
+  const { courseId } = req.params;
+  const existingCourse = await courseRepo.findCourseById(courseId);
+  if (!existingCourse) return next(new AppErr('Course not found', 404));
+
   const course = await courseRepo.approveCourse(req.params.courseId);
-  if (!course) return next(new AppErr('Course not found', 404));
   res.status(200).json({ success: true, message: 'Course approved successfully' });
 
 });
 
-exports.publishCourse = async (req, res) => {
-  try {
-    const course = await courseRepo.publishCourse(req.params.courseId);
-    if (!course) return res.status(404).json({ error: 'Course not found' });
-    res.status(200).json({ success: true, message: 'Course Published successfully' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+exports.publishCourse = catchAsync(async (req, res, next) => {
+  // check courseId is exist
+  const { courseId } = req.params;
+  const existingCourse = await courseRepo.findCourseById(courseId);
+  if (!existingCourse) return next(new AppErr('Course not found', 404));
+
+  const course = await courseRepo.publishCourse(req.params.courseId);
+  res.status(200).json({ success: true, message: 'Course Published successfully' });
+
+});
 
 exports.createReview = async (req, res) => {
   try {

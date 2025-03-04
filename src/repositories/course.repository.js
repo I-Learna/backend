@@ -61,8 +61,8 @@ exports.findAllUnits = async (courseId) => {
     .select('-__v -createdAt -updatedAt');
 };
 
-exports.findAllSessions = async () => {
-  return Session.find().populate('unitId', 'name description').select('-__v -createdAt -updatedAt');
+exports.findAllSessions = async (unitId) => {
+  return Session.find({ unitId }).populate('unitId', 'name description').select('-__v -createdAt -updatedAt');
 };
 
 exports.findCourseById = async (id) => {

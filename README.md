@@ -239,3 +239,55 @@ const findSectorIdsIsExist = async (ids) => {
 
 
 ```
+
+## adjust  cours repo findAllSessions
+```
+exports.findAllSessions = async (unitId) => {
+  return Session.find({ unitId }).populate('unitId', 'name description').select('-__v -createdAt -updatedAt');
+};
+
+```
+## and adjust getAllSessions
+
+```
+exports.getAllSessions = catchAsync(async (req, res, next) => {
+  // check if unitId is exist
+  const { unitId } = req.params;
+  const unit = await courseRepo.findUnitById(unitId);
+  if (!unit) return next(new AppErr('Unit not found', 404));
+
+  const sessions = await courseRepo.findAllSessions(unitId);
+  if (sessions.length === 0) return next(new AppErr('Sessions not found', 404));
+  res.status(200).json({ status: 'Success', length: sessions.length, sessions });
+
+});
+```
+
+## add check courseID in approve and publish
+```
+
+exports.approveCourse = catchAsync(async (req, res, next) => {
+  // check courseId is exist
+  const { courseId } = req.params;
+  const existingCourse = await courseRepo.findCourseById(courseId);
+  if (!existingCourse) return next(new AppErr('Course not found', 404));
+
+  const course = await courseRepo.approveCourse(req.params.courseId);
+  res.status(200).json({ success: true, message: 'Course approved successfully' });
+
+});
+
+exports.publishCourse = catchAsync(async (req, res, next) => {
+  // check courseId is exist
+  const { courseId } = req.params;
+  const existingCourse = await courseRepo.findCourseById(courseId);
+  if (!existingCourse) return next(new AppErr('Course not found', 404));
+
+  const course = await courseRepo.publishCourse(req.params.courseId);
+  res.status(200).json({ success: true, message: 'Course Published successfully' });
+
+});
+```
+
+## pending checking for update 
+## 
