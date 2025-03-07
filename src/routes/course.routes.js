@@ -22,10 +22,10 @@ router
   .post(courseController.uploadCourseFiles, courseController.createUnit);
 
 router
-  .route('/:courseId/units/:id')
+  .route('/units/:id')
   .get(courseController.getUnitById)
-  .put(courseController.uploadCourseFiles, courseController.updateCourse);
-router.delete('/units/:id', courseController.deleteCourse);
+  .put(courseController.uploadCourseFiles, courseController.updateUnit)
+  .delete(courseController.deleteUnit);
 
 router.put('/:courseId/approve', courseController.approveCourse);
 router.put('/:courseId/publish', courseController.publishCourse);
@@ -37,10 +37,10 @@ router
   .post(courseController.uploadCourseFiles, courseController.createSession);
 
 router
-  .route('/:unitId/sessions/:id')
+  .route('/sessions/:id')
   .get(courseController.getSessionById)
-  .put(courseController.uploadCourseFiles, courseController.updateCourse);
-router.delete('/sessions/:id', courseController.deleteCourse);
+  .put(courseController.uploadCourseFiles, courseController.updateSession)
+  .delete(courseController.deleteSession);
 
 // Review routes
 router.post('/reviews', protect, courseController.createReview);
