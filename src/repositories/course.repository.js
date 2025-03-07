@@ -159,9 +159,7 @@ exports.publishCourse = async (id) => {
 exports.createReview = async (reviewData) => {
   const newReview = new Review(reviewData);
   await newReview.save();
-  return newReview
-    .populate('userId', 'name role profileImage createdAt')
-    .select('-__v -createdAt -updatedAt');
+  return newReview;
 };
 
 exports.getReviews = async (refId, refType) => {

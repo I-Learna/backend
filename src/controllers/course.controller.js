@@ -33,7 +33,7 @@ exports.createCourse = async (req, res) => {
 exports.createUnit = async (req, res) => {
   try {
     const { courseId } = req.params;
-    const { name, description, price, duration } = req.body;
+    const { name, description, price, duration, rating } = req.body;
     // check courseId is exist
     const course = await courseRepo.findCourseById(courseId);
     if (!course) return res.status(404).json({ error: 'Course not found' });
@@ -44,6 +44,7 @@ exports.createUnit = async (req, res) => {
       description,
       price: parseFloat(price),
       duration: parseFloat(duration),
+      rating,
     };
     const unit = await courseRepo.createUnit(unitData);
 
@@ -93,6 +94,7 @@ exports.getAllCourses = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
 exports.getAllUnits = async (req, res) => {
   try {
     // check courseId is exist
@@ -106,6 +108,7 @@ exports.getAllUnits = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
 exports.getAllSessions = async (req, res) => {
   try {
     const courses = await courseRepo.findAllSessions();
@@ -124,6 +127,7 @@ exports.getCourseById = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
 exports.getUnitById = async (req, res) => {
   try {
     const course = await courseRepo.findUnitById(req.params.id);
@@ -133,6 +137,7 @@ exports.getUnitById = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
 exports.getSessionById = async (req, res) => {
   try {
     const course = await courseRepo.findSessionById(req.params.id);
@@ -148,43 +153,49 @@ exports.updateCourse = async (req, res) => {
     const { body, files } = req;
     const { id } = req.params;
 
-    const parsedBody = qs.parse(body);
+    const existingCourse = await courseRepo.findCourseById(id);
+    if (!existingCourse) return res.status(404).json({ error: 'Course not found' });
 
-    const mainPhotoUrl = files?.mainPhoto?.[0]?.path || parsedBody.mainPhoto || null;
-    const videoUrl = files?.videoUrl?.[0]
-      ? await uploadToVimeo(files.videoUrl[0].path, files.videoUrl[0].originalname)
-      : parsedBody.videoUrl || null;
-    const documents = files?.documents?.length ? files.documents.map((file) => file.path) : [];
+    const updateData = {};
 
-    const units =
-      parsedBody.units?.map((unit) => ({
-        ...unit,
-        price: parseFloat(unit.price),
-        duration: parseFloat(unit.duration),
-        sessions:
-          unit.sessions?.map((session) => ({
-            ...session,
-            duration: parseFloat(session.duration),
-            freePreview: session.freePreview === 'true',
-            videoUrl,
-            documents,
-          })) || [],
-      })) || [];
+    if (body.name) updateData.name = body.name;
+    if (body.description) updateData.description = body.description;
+    if (body.level) updateData.level = body.level;
+    if (body.language) updateData.language = body.language;
+    if (body.subtitle) updateData.subtitle = body.subtitle;
+    if (body.whatYouLearn) updateData.whatYouLearn = JSON.parse(body.whatYouLearn);
+    if (body.requirements) updateData.requirements = JSON.parse(body.requirements);
+    if (body.totalDuration) updateData.totalDuration = parseFloat(body.totalDuration);
+    if (body.totalSessions) updateData.totalSessions = parseInt(body.totalSessions, 10);
+    if (body.totalUnits) updateData.totalUnits = parseInt(body.totalUnits, 10);
+    if (body.price) updateData.price = parseFloat(body.price);
+    if (body.rating) updateData.rating = parseFloat(body.rating);
+    if (body.discount) updateData.discount = body.discount === 'true';
+    if (body.isApproved) updateData.isApproved = body.isApproved === 'true';
+    if (body.isPublished) updateData.isPublished = body.isPublished === 'true';
 
-    const updateData = {
-      ...parsedBody,
-      mainPhoto: mainPhotoUrl,
-      videoUrl,
-      documents,
-      units,
-    };
+    if (files?.mainPhoto?.[0]?.path) updateData.mainPhoto = files.mainPhoto[0].path;
+    if (files?.videoUrl?.[0]) {
+      updateData.videoUrl = await uploadToVimeo(
+        files.videoUrl[0].path,
+        files.videoUrl[0].originalname
+      );
+    } else if (body.videoUrl) {
+      updateData.videoUrl = body.videoUrl;
+    }
+    if (files?.documents?.length) updateData.documents = files.documents.map((file) => file.path);
 
-    // Update course in database
-    const course = await courseRepo.updateCourse(id, updateData);
+    Object.keys(updateData).forEach(
+      (key) => updateData[key] === undefined && delete updateData[key]
+    );
 
-    if (!course) return res.status(404).json({ error: 'Course not found' });
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ error: 'No valid fields to update' });
+    }
 
-    res.status(200).json({ message: 'Course updated successfully', course });
+    const updatedCourse = await courseRepo.updateCourse(id, updateData);
+
+    res.status(200).json({ message: 'Course updated successfully', course: updatedCourse });
   } catch (error) {
     console.error(error.message);
     res.status(500).json({ error: error.message });
@@ -194,22 +205,35 @@ exports.updateCourse = async (req, res) => {
 exports.updateUnit = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, price, duration } = req.body;
+    const { name, description, price, duration, rating } = req.body;
 
     const unit = await courseRepo.findUnitById(id);
     if (!unit) return res.status(404).json({ error: 'Unit not found' });
 
-    const updatedUnit = await courseRepo.updateUnit(id, {
-      name,
-      description,
-      price: parseFloat(price),
-      duration: parseFloat(duration),
-    });
+    const updateData = {};
+    if (name) updateData.name = name;
+    if (description) updateData.description = description;
+    if (price !== undefined) updateData.price = parseFloat(price);
+    if (duration !== undefined) updateData.duration = parseFloat(duration);
+    if (rating !== undefined) updateData.rating = parseFloat(rating);
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ error: 'No valid fields to update' });
+    }
+
+    const updatedUnit = await courseRepo.updateUnit(id, updateData);
 
     const course = await courseRepo.findCourseById(unit.courseId);
+
     if (course) {
-      course.totalDuration = course.units.reduce((sum, u) => sum + (u.duration || 0), 0);
-      course.price = course.units.reduce((sum, u) => sum + (u.price || 0), 0);
+      const updatedUnits = await courseRepo.findUnitsByCourseId(course._id);
+
+      if (updateData.duration !== undefined) {
+        course.totalDuration = updatedUnits.reduce((sum, u) => sum + (u.duration || 0), 0);
+      }
+      if (updateData.price !== undefined) {
+        course.price = updatedUnits.reduce((sum, u) => sum + (u.price || 0), 0);
+      }
       await course.save();
     }
 
@@ -228,29 +252,35 @@ exports.updateSession = async (req, res) => {
     const session = await courseRepo.findSessionById(id);
     if (!session) return res.status(404).json({ error: 'Session not found' });
 
-    let videoUrl = session.videoUrl;
-    if (files?.videoUrl) {
-      videoUrl = await uploadToVimeo(files.videoUrl[0].path, files.videoUrl[0].originalname);
+    const updateData = {};
+
+    if (name) updateData.name = name;
+    if (duration !== undefined) updateData.duration = parseFloat(duration);
+    if (freePreview !== undefined) updateData.freePreview = freePreview === 'true';
+
+    if (files?.videoUrl?.[0]) {
+      updateData.videoUrl = await uploadToVimeo(
+        files.videoUrl[0].path,
+        files.videoUrl[0].originalname
+      );
     }
 
-    let documents = [...session.documents];
-    if (files?.documents) {
-      documents = [...documents, ...files.documents.map((file) => file.path)];
+    if (files?.documents?.length) {
+      updateData.documents = [...session.documents, ...files.documents.map((file) => file.path)];
     }
 
-    const updatedSession = await courseRepo.updateSession(id, {
-      name,
-      duration: parseFloat(duration),
-      freePreview: freePreview === 'true',
-      videoUrl,
-      documents,
-    });
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ error: 'No valid fields to update' });
+    }
+
+    const updatedSession = await courseRepo.updateSession(id, updateData);
 
     const unit = await courseRepo.findUnitById(session.unitId);
     if (unit) {
       const course = await courseRepo.findCourseById(unit.courseId);
       if (course) {
-        course.totalDuration = course.units.reduce(
+        const updatedUnits = await courseRepo.findUnitsByCourseId(course._id);
+        course.totalDuration = updatedUnits.reduce(
           (sum, u) => sum + u.sessions.reduce((sSum, s) => sSum + (s.duration || 0), 0),
           0
         );
