@@ -29,6 +29,8 @@ router
 
 router.put('/:courseId/approve', courseController.approveCourse);
 router.put('/:courseId/publish', courseController.publishCourse);
+router.get('/:courseId/allunits', courseController.findUnitsByCourseId);
+router.get('/:unitId/allsessions', courseController.findSessionsByUnitId);
 
 // Session routes
 router

@@ -148,6 +148,32 @@ exports.getSessionById = async (req, res) => {
   }
 };
 
+exports.findUnitsByCourseId = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const units = await courseRepo.findUnitsByCourseId(courseId);
+    if (!units || units.length === 0) {
+      return res.status(404).json({ error: 'No units found for this course' });
+    }
+    res.status(200).json({ status: 'Success', total: units.length, units });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.findSessionsByUnitId = async (req, res) => {
+  try {
+    const { unitId } = req.params;
+    const sessions = await courseRepo.findSessionsByUnitId(unitId);
+    if (!sessions || sessions.length === 0) {
+      return res.status(404).json({ error: 'No sessions found for this course' });
+    }
+    res.status(200).json({ status: 'Success', total: sessions.length, sessions });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 exports.updateCourse = async (req, res) => {
   try {
     const { body, files } = req;
