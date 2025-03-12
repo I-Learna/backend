@@ -77,7 +77,18 @@ exports.findCourseById = async (id) => {
     })
     .select('-__v -createdAt -updatedAt');
 };
+exports.findUnitsByCourseId = async (courseId) => {
+  return Unit.find({ courseId })
+    .populate('courseId', 'name description')
+    .populate('sessions', 'name duration videoUrl freePreview')
+    .select('-__v -createdAt -updatedAt');
+};
 
+exports.findSessionsByUnitId = async (unitId) => {
+  return Session.find({ unitId })
+    .populate('unitId', 'name duration')
+    .select('-__v -createdAt -updatedAt');
+};
 exports.findUnitById = async (unitId) => {
   return Unit.findById(unitId)
     .populate('courseId', 'name description')
@@ -159,9 +170,7 @@ exports.publishCourse = async (id) => {
 exports.createReview = async (reviewData) => {
   const newReview = new Review(reviewData);
   await newReview.save();
-  return newReview
-    .populate('userId', 'name role profileImage createdAt')
-    .select('-__v -createdAt -updatedAt');
+  return newReview;
 };
 
 exports.getReviews = async (refId, refType) => {

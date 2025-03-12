@@ -36,9 +36,7 @@ const UnitSchema = new Schema({
   price: { type: Number, required: true },
   duration: { type: Number, required: true },
   sessions: [{ type: Schema.Types.ObjectId, ref: 'Session', default: [] }],
-  rating: { type: Number, min: 0, max: 5, default: 0 },
-  reviews: [{ type: Schema.Types.ObjectId, ref: 'Review', default: [] }],
-  qna: [{ type: Schema.Types.ObjectId, ref: 'QA', default: [] }],
+  rating: { type: Number, min: 1, max: 5, default: 0 },
 });
 
 // Session
@@ -55,7 +53,7 @@ const SessionSchema = new Schema({
 const ReviewSchema = new Schema({
   userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   refId: { type: Schema.Types.ObjectId, required: true },
-  refType: { type: String, enum: ['course', 'unit'], required: true },
+  refType: { type: String, enum: ['course'], required: true },
   review: { type: String, required: true },
   rating: { type: Number, min: 1, max: 5, default: 1 },
   createdAt: { type: Date, default: Date.now },
@@ -64,7 +62,7 @@ const ReviewSchema = new Schema({
 // QA
 const QASchema = new Schema({
   refId: { type: Schema.Types.ObjectId, required: true },
-  refType: { type: String, enum: ['course', 'unit'], required: true },
+  refType: { type: String, enum: ['course'], required: true },
   question: { type: String, required: true },
   askedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   answers: [

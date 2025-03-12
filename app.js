@@ -62,6 +62,11 @@ app.use('/api', questionRoutes);
 app.use('/api/ebook', ebookRoutes);
 app.use('/api/course', courseRoutes);
 
+// api/mycourses  >> purchsecourses
+// api/dashboard/freelance/courses  >> createdCourses
+
+// api/dashborad/admin
+
 // error handler middleware
 app.all('*', (req, res, next) => {
   next(new AppErr(`cannot find this ${req.originalUrl} on the server`, 404));
