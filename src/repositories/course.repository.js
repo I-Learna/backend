@@ -42,8 +42,8 @@ exports.createSession = async (sessionData) => {
   return newSession;
 };
 
-exports.findAllCourses = async () => {
-  return Course.find()
+exports.findAllCourses = async (filter = {}) => {
+  return Course.find(filter)
     .populate('user', 'name role profileImage ')
     .populate('industry', 'name name_ar options')
     .populate('sector', 'name description')

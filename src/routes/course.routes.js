@@ -3,6 +3,7 @@ const router = express.Router();
 const courseController = require('../controllers/course.controller');
 const { protect } = require('../middlewares/authMiddleware');
 
+router.get('/publishedcourses', courseController.getPublishedCourses);
 // Course routes
 router
   .route('/')
@@ -14,7 +15,6 @@ router
   .get(courseController.getCourseById)
   .put(protect, courseController.uploadCourseFiles, courseController.updateCourse)
   .delete(courseController.deleteCourse);
-
 // Unit routes
 router
   .route('/:courseId/units')

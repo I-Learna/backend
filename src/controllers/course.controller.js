@@ -135,6 +135,15 @@ exports.getCourseById = async (req, res) => {
   }
 };
 
+exports.getPublishedCourses = async (req, res) => {
+  try {
+    const courses = await courseRepo.findAllCourses({ isPublished: true });
+    res.status(200).json({ status: 'Success', length: courses.length, courses });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 exports.getUnitById = async (req, res) => {
   try {
     const course = await courseRepo.findUnitById(req.params.id);
@@ -404,9 +413,13 @@ exports.approveCourse = async (req, res) => {
 
 exports.publishCourse = async (req, res) => {
   try {
-    const course = await courseRepo.publishCourse(req.params.courseId);
+    const course = await courseRepo.findCourseById(req.params.courseId);
     if (!course) return res.status(404).json({ error: 'Course not found' });
-    res.status(200).json({ success: true, message: 'Course Published successfully' });
+    if (!course.isApproved) return res.status(403).json({ error: 'Course must be approved first' });
+    const publishedCourse = await courseRepo.publishCourse(req.params.courseId);
+    res
+      .status(200)
+      .json({ success: true, message: 'Course Published successfully', course: publishedCourse });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
