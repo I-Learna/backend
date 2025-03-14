@@ -514,7 +514,7 @@ exports.addAnswer = async (req, res) => {
     const { qaId } = req.params;
     const { answer } = req.body;
 
-    if (!req.user || !req.user._id) {
+    if (!req.user || !req.user._id || req.user.role !== 'Freelancer') {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
