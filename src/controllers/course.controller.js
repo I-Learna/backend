@@ -135,6 +135,14 @@ exports.getCourseById = async (req, res) => {
   }
 };
 
+exports.getAllCoursesByUserId = async (req, res) => {
+  try {
+    const courses = await courseRepo.findAllCourses({ user: req.params.userId });
+    res.status(200).json({ status: 'Success', length: courses.length, courses });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 exports.getPublishedCourses = async (req, res) => {
   try {
     const courses = await courseRepo.findAllCourses({ isPublished: true });

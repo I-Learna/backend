@@ -4,6 +4,7 @@ const courseController = require('../controllers/course.controller');
 const { protect } = require('../middlewares/authMiddleware');
 
 router.get('/publishedcourses', courseController.getPublishedCourses);
+router.get('/user/:userId', courseController.getAllCoursesByUserId);
 // Course routes
 router
   .route('/')
