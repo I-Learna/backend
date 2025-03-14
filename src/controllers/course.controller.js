@@ -11,6 +11,8 @@ exports.uploadCourseFiles = uploadMultiple([
 
 exports.createCourse = async (req, res) => {
   try {
+    const user = req.user;
+
     const { body, files } = req;
     const parsedBody = qs.parse(body);
 
@@ -20,7 +22,12 @@ exports.createCourse = async (req, res) => {
       ? await uploadToVimeo(files.videoUrl[0].path, files.videoUrl[0].originalname)
       : null;
 
-    const courseData = { ...parsedBody, mainPhoto: mainPhotoUrl, testVideoUrl: videoUrl };
+    const courseData = {
+      ...parsedBody,
+      mainPhoto: mainPhotoUrl,
+      testVideoUrl: videoUrl,
+      user: user,
+    };
 
     const course = await courseRepo.createCourse(courseData);
 
@@ -175,10 +182,13 @@ exports.findSessionsByUnitId = async (req, res) => {
 };
 
 exports.updateCourse = async (req, res) => {
-  try {
-    const { body, files } = req;
-    const { id } = req.params;
+  const { body, files } = req;
+  const { id } = req.params;
+  const user = req.user;
 
+  if (!user) return res.status(401).json({ error: 'Not authenticated' });
+
+  try {
     const existingCourse = await courseRepo.findCourseById(id);
     if (!existingCourse) return res.status(404).json({ error: 'Course not found' });
 
@@ -404,20 +414,23 @@ exports.publishCourse = async (req, res) => {
 
 exports.createReview = async (req, res) => {
   try {
-    const { refId, refType, review, rating } = req.body;
+    const { course, review, rating } = req.body;
 
     if (!req.user || !req.user._id) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    if (!refId || !refType || !review || !rating) {
+    if (!course || !review || !rating) {
       return res.status(400).json({ error: 'All fields are required' });
     }
+    const existingCourse = await courseRepo.findCourseById(course);
 
+    if (!existingCourse) {
+      return res.status(404).json({ error: 'Course not found' });
+    }
     const reviewData = {
-      userId: req.user._id,
-      refId,
-      refType,
+      user: req.user._id,
+      course,
       review,
       rating,
     };
@@ -432,13 +445,13 @@ exports.createReview = async (req, res) => {
 
 exports.getReviews = async (req, res) => {
   try {
-    const { refId, refType } = req.params;
+    const { course } = req.params;
 
-    if (!refId || !refType) {
+    if (!course) {
       return res.status(400).json({ error: 'refId and refType are required' });
     }
 
-    const reviews = await courseRepo.getReviews(refId, refType);
+    const reviews = await courseRepo.getReviews(course);
 
     res.status(200).json({ status: 'success', total: reviews.length, reviews });
   } catch (error) {
@@ -448,19 +461,21 @@ exports.getReviews = async (req, res) => {
 
 exports.createQuestion = async (req, res) => {
   try {
-    const { refId, refType, question } = req.body;
+    const { course, question } = req.body;
 
     if (!req.user || !req.user._id) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    if (!refId || !refType || !question) {
+    if (!course || !question) {
       return res.status(400).json({ error: 'All fields are required' });
     }
-
+    const existingCourse = await courseRepo.findCourseById(course);
+    if (!existingCourse) {
+      return res.status(404).json({ error: 'Course not found' });
+    }
     const questionData = {
-      refId,
-      refType,
+      course,
       question,
       askedBy: req.user._id,
     };
@@ -485,6 +500,13 @@ exports.addAnswer = async (req, res) => {
     if (!answer) {
       return res.status(400).json({ error: 'Answer is required' });
     }
+    if (!qaId) {
+      return res.status(400).json({ error: 'qaId is required' });
+    }
+    const existingQA = await courseRepo.findQAById(qaId);
+    if (!existingQA) {
+      return res.status(404).json({ error: 'QA not found' });
+    }
 
     const answerData = {
       answer,
@@ -503,13 +525,19 @@ exports.addAnswer = async (req, res) => {
 
 exports.getQuestions = async (req, res) => {
   try {
-    const { refId, refType } = req.params;
+    const { course } = req.params;
 
-    if (!refId || !refType) {
+    if (!course) {
       return res.status(400).json({ error: 'refId and refType are required' });
     }
 
-    const questions = await courseRepo.getQuestions(refId, refType);
+    const existingCourse = await courseRepo.findCourseById(course);
+
+    if (!existingCourse) {
+      return res.status(404).json({ error: 'Course not found' });
+    }
+
+    const questions = await courseRepo.getQuestions(course);
 
     res.status(200).json({ status: 'success', total: questions.length, questions });
   } catch (error) {

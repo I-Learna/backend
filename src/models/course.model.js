@@ -5,6 +5,7 @@ const { Schema } = mongoose;
 const CourseSchema = new Schema({
   industry: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Industry', required: true }],
   sector: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Sector', required: true }],
+  user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   name: { type: String, required: true },
   description: { type: String, required: true },
   mainPhoto: { type: String, required: true },
@@ -23,7 +24,6 @@ const CourseSchema = new Schema({
   testVideoUrl: { type: String, required: true },
   isApproved: { type: Boolean, default: false },
   isPublished: { type: Boolean, default: false },
-  rating: { type: Number, min: 1, max: 5, default: 0 },
   reviews: [{ type: Schema.Types.ObjectId, ref: 'Review', default: [] }],
   qna: [{ type: Schema.Types.ObjectId, ref: 'QA', default: [] }],
 });
@@ -51,9 +51,8 @@ const SessionSchema = new Schema({
 
 // Review
 const ReviewSchema = new Schema({
-  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  refId: { type: Schema.Types.ObjectId, required: true },
-  refType: { type: String, enum: ['course'], required: true },
+  course: { type: Schema.Types.ObjectId, ref: 'Course', required: true },
+  user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   review: { type: String, required: true },
   rating: { type: Number, min: 1, max: 5, default: 0 },
   createdAt: { type: Date, default: Date.now },
@@ -61,8 +60,7 @@ const ReviewSchema = new Schema({
 
 // QA
 const QASchema = new Schema({
-  refId: { type: Schema.Types.ObjectId, required: true },
-  refType: { type: String, enum: ['course'], required: true },
+  course: { type: Schema.Types.ObjectId, ref: 'Course', required: true },
   question: { type: String, required: true },
   askedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   answers: [

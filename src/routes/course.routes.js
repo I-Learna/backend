@@ -7,12 +7,12 @@ const { protect } = require('../middlewares/authMiddleware');
 router
   .route('/')
   .get(courseController.getAllCourses)
-  .post(courseController.uploadCourseFiles, courseController.createCourse);
+  .post(protect, courseController.uploadCourseFiles, courseController.createCourse);
 
 router
   .route('/:id')
   .get(courseController.getCourseById)
-  .put(courseController.uploadCourseFiles, courseController.updateCourse)
+  .put(protect, courseController.uploadCourseFiles, courseController.updateCourse)
   .delete(courseController.deleteCourse);
 
 // Unit routes
@@ -46,11 +46,11 @@ router
 
 // Review routes
 router.post('/reviews', protect, courseController.createReview);
-router.get('/reviews/:refId/:refType', courseController.getReviews);
+router.get('/reviews/:course', courseController.getReviews);
 
 //Question routes
 router.post('/questions', protect, courseController.createQuestion);
 router.post('/questions/:qaId/answers', protect, courseController.addAnswer);
-router.get('/questions/:refId/:refType', courseController.getQuestions);
+router.get('/questions/:course', courseController.getQuestions);
 
 module.exports = router;
