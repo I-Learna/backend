@@ -5,6 +5,12 @@ const ac = new AccessControl();
 // Define roles and their permissions
 ac.grant('User').readOwn('dashboard').readOwn('course').readOwn('invoice');
 
+ac.grant('Freelancer')
+  .extend('User') // Inherits 'User' permissions
+  .createOwn('course')
+  .updateOwn('course')
+  .deleteOwn('course');
+
 ac.grant('OperationTeam')
   .extend('User') // Inherits 'User' permissions
   .readAny('dashboard')

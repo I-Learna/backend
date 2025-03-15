@@ -42,10 +42,26 @@ exports.createSession = async (sessionData) => {
   return newSession;
 };
 
-exports.findAllCourses = async () => {
-  return Course.find()
+exports.findAllCourses = async (filter = {}) => {
+  return Course.find(filter)
+    .populate('user', 'name role profileImage ')
     .populate('industry', 'name name_ar options')
     .populate('sector', 'name description')
+    .populate('sector', 'name description')
+    .populate({
+      path: 'qna',
+      populate: [
+        { path: 'course', select: 'name mainPhoto level language price' },
+        { path: 'askedBy', select: 'name role profileImage' },
+        { path: 'answers.answeredBy', select: 'name role profileImage' },
+      ],
+      select: 'question answers',
+    })
+    .populate({
+      path: 'reviews',
+      populate: { path: 'user', select: 'name profileImage' },
+      select: 'review rating createdAt',
+    })
     .populate('coupon', 'name')
     .populate({
       path: 'units',
@@ -67,8 +83,23 @@ exports.findAllSessions = async (unitId) => {
 
 exports.findCourseById = async (id) => {
   return Course.findById(id)
+    .populate('user', 'name role profileImage ')
     .populate('industry', 'name name_ar options')
     .populate('sector', 'name description')
+    .populate({
+      path: 'qna',
+      populate: [
+        { path: 'course', select: 'name mainPhoto level language price' },
+        { path: 'askedBy', select: 'name role profileImage' },
+        { path: 'answers.answeredBy', select: 'name role profileImage' },
+      ],
+      select: 'question answers',
+    })
+    .populate({
+      path: 'reviews',
+      populate: { path: 'user', select: 'name profileImage' },
+      select: 'review rating createdAt',
+    })
     .populate('coupon', 'name')
     .populate({
       path: 'units',
@@ -107,6 +138,7 @@ exports.updateCourse = async (id, updateData) => {
     new: true,
     runValidators: true,
   })
+    .populate('user', 'name role profileImage ')
     .populate('industry', 'name name_ar options')
     .populate('sector', 'name description')
     .populate('coupon', 'name')
@@ -143,6 +175,7 @@ exports.deleteSession = async (id) => {
 
 exports.approveCourse = async (id) => {
   return Course.findByIdAndUpdate(id, { isApproved: true })
+    .populate('user', 'name role profileImage ')
     .populate('industry', 'name name_ar options')
     .populate('sector', 'name description')
     .populate('coupon', 'name')
@@ -156,6 +189,7 @@ exports.approveCourse = async (id) => {
 
 exports.publishCourse = async (id) => {
   return Course.findByIdAndUpdate(id, { isPublished: true })
+    .populate('user', 'name role profileImage ')
     .populate('industry', 'name name_ar options')
     .populate('sector', 'name description')
     .populate('coupon', 'name')
@@ -170,30 +204,41 @@ exports.publishCourse = async (id) => {
 exports.createReview = async (reviewData) => {
   const newReview = new Review(reviewData);
   await newReview.save();
+  await Course.findByIdAndUpdate(reviewData.course, { $push: { reviews: newReview._id } });
   return newReview;
 };
 
-exports.getReviews = async (refId, refType) => {
-  return Review.find({ refId, refType })
-    .populate('userId', 'name role profileImage createdAt')
+exports.getReviews = async (course) => {
+  return Review.find({ course })
+    .populate('user', 'name role profileImage')
     .select('-__v -createdAt -updatedAt');
 };
 
 exports.createQuestion = async (questionData) => {
   const newQuestion = new QA(questionData);
   await newQuestion.save();
-  return newQuestion.populate('askedBy', 'name role profileImage createdAt');
+  await Course.findByIdAndUpdate(questionData.course, { $push: { qna: newQuestion._id } });
+  return newQuestion.populate('askedBy', 'name role profileImage');
 };
 
 exports.addAnswer = async (qaId, answerData) => {
   return QA.findByIdAndUpdate(qaId, { $push: { answers: answerData } }, { new: true })
-    .populate('answers.answeredBy', 'name role profileImage createdAt')
+    .populate('answers.answeredBy', 'name role profileImage')
     .select('-__v -createdAt -updatedAt');
 };
 
-exports.getQuestions = async (refId, refType) => {
-  return QA.find({ refId, refType })
-    .populate('askedBy', 'name role profileImage createdAt')
-    .populate('answers.answeredBy', 'name role profileImage createdAt')
+exports.getQuestions = async (course) => {
+  return QA.find({ course })
+    .populate('course', 'name mainPhoto level language price')
+    .populate('askedBy', 'name role profileImage ')
+    .populate('answers.answeredBy', 'name role profileImage')
+    .select('-__v -createdAt -updatedAt');
+};
+
+exports.findQAById = async (id) => {
+  return QA.findById(id)
+    .populate('course', 'name mainPhoto level language price')
+    .populate('askedBy', 'name role profileImage ')
+    .populate('answers.answeredBy', 'name role profileImage')
     .select('-__v -createdAt -updatedAt');
 };
