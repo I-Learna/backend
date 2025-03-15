@@ -36,6 +36,20 @@ exports.createSession = async (req, res) => {
 
     const session = await sessionRepo.createSession(sessionData);
 
+    if (unit) {
+      unit.duration = await sessionRepo
+        .findSessionsByUnitId(unit._id)
+        .then((sessions) => sessions.reduce((sum, s) => sum + (s.duration || 0), 0));
+      await unit.save();
+
+      const course = await courseRepo.findCourseById(unit.courseId);
+      if (course) {
+        const updatedUnits = await unitRepo.findUnitsByCourseId(course._id);
+        course.totalDuration = updatedUnits.reduce((sum, u) => sum + (u.duration || 0), 0);
+        await course.save();
+      }
+    }
+
     res.status(201).json({ message: 'Session created successfully', session: session });
   } catch (error) {
     res.status(500).json({ error: error.message });
