@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
+const slugify = require('slugify');
 
 // Course
 const CourseSchema = new Schema({
@@ -7,6 +8,7 @@ const CourseSchema = new Schema({
   sector: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Sector', required: true }],
   user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   name: { type: String, required: true },
+  slug: { type: String, unique: true, lowercase: true, trim: true },
   description: { type: String, required: true },
   mainPhoto: { type: String, required: true },
   level: { type: String, enum: ['beginner', 'intermediate', 'advanced', 'all'], required: true },
@@ -26,6 +28,24 @@ const CourseSchema = new Schema({
   isPublished: { type: Boolean, default: false },
   reviews: [{ type: Schema.Types.ObjectId, ref: 'Review', default: [] }],
   qna: [{ type: Schema.Types.ObjectId, ref: 'QA', default: [] }],
+});
+
+// slug middleware before saving
+CourseSchema.pre('save', async function (next) {
+  if (!this.isModified('name')) return next(); // only update slug if name changes
+
+  let baseSlug = slugify(this.name, { lower: true, strict: true });
+  let uniqueSlug = baseSlug;
+  let counter = 1;
+
+  // checkin if slug already exists in the db
+  while (await mongoose.model('Course').exists({ slug: uniqueSlug })) {
+    uniqueSlug = `${baseSlug}-${counter}`;
+    counter++;
+  }
+
+  this.slug = uniqueSlug;
+  next();
 });
 
 // Review

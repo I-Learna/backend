@@ -24,15 +24,11 @@ exports.findAllSessions = async () => {
 };
 
 exports.findSessionsByUnitId = async (unitId) => {
-  return Session.find({ unitId })
-    .populate('unitId', 'name duration')
-    .select('-__v ');
+  return Session.find({ unitId }).populate('unitId', 'name duration').select('-__v ');
 };
 
 exports.findSessionById = async (sessionId) => {
-  return Session.findById(sessionId)
-    .populate('unitId', 'name description')
-    .select('-__v ');
+  return Session.findById(sessionId).populate('unitId', 'name description').select('-__v ');
 };
 
 exports.updateSession = async (id, updateData) => {
