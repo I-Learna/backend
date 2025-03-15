@@ -20,25 +20,25 @@ exports.createSession = async (sessionData) => {
 };
 
 exports.findAllSessions = async () => {
-  return Session.find().populate('unitId', 'name description').select('-__v -createdAt -updatedAt');
+  return Session.find().populate('unitId', 'name description').select('-__v ');
 };
 
 exports.findSessionsByUnitId = async (unitId) => {
   return Session.find({ unitId })
     .populate('unitId', 'name duration')
-    .select('-__v -createdAt -updatedAt');
+    .select('-__v ');
 };
 
 exports.findSessionById = async (sessionId) => {
   return Session.findById(sessionId)
     .populate('unitId', 'name description')
-    .select('-__v -createdAt -updatedAt');
+    .select('-__v ');
 };
 
 exports.updateSession = async (id, updateData) => {
   return Session.findByIdAndUpdate(id, updateData, { new: true, runValidators: true })
     .populate('unitId', 'name description')
-    .select('-__v -createdAt -updatedAt');
+    .select('-__v ');
 };
 
 exports.deleteSession = async (id) => {

@@ -20,28 +20,28 @@ exports.findAllUnits = async (courseId) => {
   return Unit.find({ courseId })
     .populate('courseId', 'name description')
     .populate('sessions', 'name duration videoUrl freePreview')
-    .select('-__v -createdAt -updatedAt');
+    .select('-__v ');
 };
 
 exports.findUnitsByCourseId = async (courseId) => {
   return Unit.find({ courseId })
     .populate('courseId', 'name description')
     .populate('sessions', 'name duration videoUrl freePreview')
-    .select('-__v -createdAt -updatedAt');
+    .select('-__v ');
 };
 
 exports.findUnitById = async (unitId) => {
   return Unit.findById(unitId)
     .populate('courseId', 'name description')
     .populate('sessions', 'name duration videoUrl freePreview')
-    .select('-__v -createdAt -updatedAt');
+    .select('-__v ');
 };
 
 exports.updateUnit = async (id, updateData) => {
   return Unit.findByIdAndUpdate(id, updateData, { new: true, runValidators: true })
     .populate('courseId', 'name description')
     .populate('sessions', 'name duration videoUrl freePreview')
-    .select('-__v -createdAt -updatedAt');
+    .select('-__v ');
 };
 
 exports.deleteUnit = async (id) => {

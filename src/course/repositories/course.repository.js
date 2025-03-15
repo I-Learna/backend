@@ -12,7 +12,7 @@ exports.findAllCourses = async (filter = {}) => {
     .populate('industry', 'name ')
     .populate('sector', 'name ')
     .populate('coupon', 'name')
-    .select('-__v -createdAt ');
+    .select('-__v  ');
 };
 
 exports.findCourseById = async (id) => {
@@ -37,10 +37,10 @@ exports.findCourseById = async (id) => {
     .populate('coupon', 'name')
     .populate({
       path: 'units',
-      populate: { path: 'sessions', select: '-__v -createdAt -updatedAt' },
-      select: '-__v -createdAt -updatedAt',
+      populate: { path: 'sessions', select: '-__v' },
+      select: '-__v ',
     })
-    .select('-__v -createdAt ');
+    .select('-__v  ');
 };
 
 exports.updateCourse = async (id, updateData) => {
@@ -54,7 +54,7 @@ exports.updateCourse = async (id, updateData) => {
     .populate('coupon', 'name')
     .populate({
       path: 'units',
-      populate: { path: 'sessions', select: '-__v -createdAt -updatedAt' },
+      populate: { path: 'sessions', select: '-__v ' },
     });
 };
 
@@ -70,10 +70,10 @@ exports.approveCourse = async (id) => {
     .populate('coupon', 'name')
     .populate({
       path: 'units',
-      populate: { path: 'sessions', select: '-__v -createdAt -updatedAt' },
-      select: '-__v -createdAt -updatedAt',
+      populate: { path: 'sessions', select: '-__v ' },
+      select: '-__v ',
     })
-    .select('-__v -createdAt ');
+    .select('-__v  ');
 };
 
 exports.publishCourse = async (id) => {
@@ -84,10 +84,10 @@ exports.publishCourse = async (id) => {
     .populate('coupon', 'name')
     .populate({
       path: 'units',
-      populate: { path: 'sessions', select: '-__v -createdAt -updatedAt' },
-      select: '-__v -createdAt ',
+      populate: { path: 'sessions', select: '-__v' },
+      select: '-__v ',
     })
-    .select('-__v -createdAt ');
+    .select('-__v ');
 };
 
 exports.createReview = async (reviewData) => {
