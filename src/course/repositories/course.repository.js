@@ -24,7 +24,7 @@ exports.findCourseById = async (id) => {
       path: 'qna',
       populate: [
         { path: 'course', select: 'name mainPhoto level language price' },
-        { path: 'askedBy', select: 'name role profileImage' },
+        { path: 'askedBy', select: 'name profileImage' },
         { path: 'answers.answeredBy', select: 'name role profileImage' },
       ],
       select: 'question answers',
@@ -32,7 +32,7 @@ exports.findCourseById = async (id) => {
     .populate({
       path: 'reviews',
       populate: { path: 'user', select: 'name profileImage' },
-      select: 'review rating createdAt',
+      select: 'review rating createdAt updatedAt',
     })
     .populate('coupon', 'name')
     .populate({
@@ -105,7 +105,7 @@ exports.createQuestion = async (questionData) => {
   const newQuestion = new QA(questionData);
   await newQuestion.save();
   await Course.findByIdAndUpdate(questionData.course, { $push: { qna: newQuestion._id } });
-  return newQuestion.populate('askedBy', 'name  profileImage');
+  return newQuestion.populate('askedBy', 'name profileImage');
 };
 
 exports.addAnswer = async (qaId, answerData) => {

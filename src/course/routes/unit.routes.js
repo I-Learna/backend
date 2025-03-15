@@ -15,4 +15,6 @@ router
   .put(unitController.uploadCourseFiles, unitController.updateUnit)
   .delete(unitController.deleteUnit);
 
+router.get('/:courseId/allunits', unitController.findUnitsByCourseId);
+
 module.exports = router;

@@ -15,4 +15,6 @@ router
   .put(sessionController.uploadCourseFiles, sessionController.updateSession)
   .delete(sessionController.deleteSession);
 
+router.get('/:unitId/allsessions', sessionController.findSessionsByUnitId);
+
 module.exports = router;

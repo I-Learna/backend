@@ -1,5 +1,7 @@
 const sessionRepo = require('../repositories/session.repository');
 const { uploadMultiple, uploadToVimeo } = require('../../utils/uploadUtil');
+const courseRepo = require('../repositories/course.repository');
+const unitRepo = require('../repositories/unit.repository');
 
 // Middleware for file uploads
 exports.uploadCourseFiles = uploadMultiple([
@@ -15,7 +17,7 @@ exports.createSession = async (req, res) => {
     const { files } = req;
 
     // check if unitId is exist
-    const unit = await sessionRepo.findUnitById(unitId);
+    const unit = await unitRepo.findUnitById(unitId);
     if (!unit) return res.status(404).json({ error: 'Unit not found' });
 
     const videoUrl = files.videoUrl
@@ -42,8 +44,8 @@ exports.createSession = async (req, res) => {
 
 exports.getAllSessions = async (req, res) => {
   try {
-    const courses = await sessionRepo.findAllSessions();
-    res.status(200).json({ status: 'Success', length: courses.length, courses });
+    const sessions = await sessionRepo.findAllSessions();
+    res.status(200).json({ status: 'Success', length: sessions.length, sessions });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -51,9 +53,9 @@ exports.getAllSessions = async (req, res) => {
 
 exports.getSessionById = async (req, res) => {
   try {
-    const course = await sessionRepo.findSessionById(req.params.id);
-    if (!course) return res.status(404).json({ error: 'Course not found' });
-    res.status(200).json(course);
+    const session = await sessionRepo.findSessionById(req.params.id);
+    if (!session) return res.status(404).json({ error: 'Session not found' });
+    res.status(200).json(session);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -104,11 +106,11 @@ exports.updateSession = async (req, res) => {
 
     const updatedSession = await sessionRepo.updateSession(id, updateData);
 
-    const unit = await sessionRepo.findUnitById(session.unitId);
+    const unit = await unitRepo.findUnitById(session.unitId);
     if (unit) {
-      const course = await sessionRepo.findCourseById(unit.courseId);
+      const course = await courseRepo.findCourseById(unit.courseId);
       if (course) {
-        const updatedUnits = await sessionRepo.findUnitsByCourseId(course._id);
+        const updatedUnits = await unitRepo.findUnitsByCourseId(course._id);
         course.totalDuration = updatedUnits.reduce(
           (sum, u) => sum + u.sessions.reduce((sSum, s) => sSum + (s.duration || 0), 0),
           0
@@ -131,12 +133,12 @@ exports.deleteSession = async (req, res) => {
 
     await sessionRepo.deleteSession(id);
 
-    const unit = await sessionRepo.findUnitById(session.unitId);
+    const unit = await unitRepo.findUnitById(session.unitId);
     if (unit) {
       unit.sessions = unit.sessions.filter((s) => s.toString() !== id);
       await unit.save();
 
-      const course = await sessionRepo.findCourseById(unit.courseId);
+      const course = await courseRepo.findCourseById(unit.courseId);
       if (course) {
         course.totalSessions -= 1;
         course.totalDuration -= session.duration || 0;

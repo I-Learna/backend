@@ -1,4 +1,5 @@
-const { Course, Unit } = require('../models/course.model');
+const { Course } = require('../models/course.model');
+const { Unit } = require('../models/unit.model');
 
 exports.createUnit = async (unitData) => {
   const newUnit = new Unit(unitData);

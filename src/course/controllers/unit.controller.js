@@ -1,4 +1,5 @@
 const unitRepo = require('../repositories/unit.repository');
+const courseRepo = require('../repositories/course.repository');
 const { uploadMultiple } = require('../../utils/uploadUtil');
 
 // Middleware for file uploads
@@ -13,7 +14,7 @@ exports.createUnit = async (req, res) => {
     const { courseId } = req.params;
     const { name, description, price, duration, rating } = req.body;
     // check courseId is exist
-    const course = await unitRepo.findCourseById(courseId);
+    const course = await courseRepo.findCourseById(courseId);
     if (!course) return res.status(404).json({ error: 'Course not found' });
     if (!course.isApproved) return res.status(403).json({ error: 'Course must be approved first' });
     const unitData = {
@@ -36,7 +37,7 @@ exports.getAllUnits = async (req, res) => {
   try {
     // check courseId is exist
     const { courseId } = req.params;
-    const course = await unitRepo.findCourseById(courseId);
+    const course = await courseRepo.findCourseById(courseId);
     if (!course) return res.status(404).json({ error: 'Course not found' });
 
     const courses = await unitRepo.findAllUnits(courseId);
@@ -90,7 +91,7 @@ exports.updateUnit = async (req, res) => {
 
     const updatedUnit = await unitRepo.updateUnit(id, updateData);
 
-    const course = await unitRepo.findCourseById(unit.courseId);
+    const course = await courseRepo.findCourseById(unit.courseId);
 
     if (course) {
       const updatedUnits = await unitRepo.findUnitsByCourseId(course._id);
@@ -118,7 +119,7 @@ exports.deleteUnit = async (req, res) => {
 
     await unitRepo.deleteUnit(id);
 
-    const course = await unitRepo.findCourseById(unit.courseId);
+    const course = await courseRepo.findCourseById(unit.courseId);
     if (course) {
       course.units = course.units.filter((u) => u.toString() !== id);
       course.totalUnits -= 1;

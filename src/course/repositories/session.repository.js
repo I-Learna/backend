@@ -1,4 +1,6 @@
-const { Course, Unit, Session } = require('../models/course.model');
+const { Course } = require('../models/course.model');
+const { Unit } = require('../models/unit.model');
+const { Session } = require('../models/session.model');
 
 exports.createSession = async (sessionData) => {
   const newSession = new Session(sessionData);
