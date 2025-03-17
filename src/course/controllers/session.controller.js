@@ -2,6 +2,11 @@ const sessionRepo = require('../repositories/session.repository');
 const { uploadMultiple, uploadToVimeo } = require('../../utils/uploadUtil');
 const courseRepo = require('../repositories/course.repository');
 const unitRepo = require('../repositories/unit.repository');
+const {
+  calculatePriceAfterDiscount,
+  calculateTotalDuration,
+  calculateTotalPrice,
+} = require('../../utils/calculateUtils');
 
 // Middleware for file uploads
 exports.uploadCourseFiles = uploadMultiple([
@@ -39,18 +44,20 @@ exports.createSession = async (req, res) => {
     if (unit) {
       unit.duration = await sessionRepo
         .findSessionsByUnitId(unit._id)
-        .then((sessions) => sessions.reduce((sum, s) => sum + (s.duration || 0), 0));
+        .then((sessions) => calculateTotalDuration(sessions));
+      unit.price = calculatePriceAfterDiscount(unit.price, unit.discount);
       await unit.save();
 
       const course = await courseRepo.findCourseById(unit.courseId);
       if (course) {
         const updatedUnits = await unitRepo.findUnitsByCourseId(course._id);
-        course.totalDuration = updatedUnits.reduce((sum, u) => sum + (u.duration || 0), 0);
+        course.totalDuration = calculateTotalDuration(updatedUnits);
+        course.price = calculateTotalPrice(updatedUnits);
         await course.save();
       }
     }
 
-    res.status(201).json({ message: 'Session created successfully', session: session });
+    res.status(201).json({ message: 'Session created successfully', session });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -129,6 +136,7 @@ exports.updateSession = async (req, res) => {
           (sum, u) => sum + u.sessions.reduce((sSum, s) => sSum + (s.duration || 0), 0),
           0
         );
+        course.price = calculateTotalPrice(updatedUnits);
         await course.save();
       }
     }

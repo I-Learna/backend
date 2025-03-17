@@ -1,7 +1,25 @@
 const qs = require('qs');
 const courseRepo = require('../repositories/course.repository');
 const { uploadMultiple, uploadToVimeo } = require('../../utils/uploadUtil');
+const { calculatePriceAfterDiscount } = require('../../utils/calculateUtils');
 
+const formatCourse = (course, unit = null) => {
+  const coursePriceAfterDiscount = calculatePriceAfterDiscount(course.price, course.discount);
+  const unitPriceAfterDiscount = unit
+    ? calculatePriceAfterDiscount(unit.price, unit.discount)
+    : null;
+
+  return {
+    ...course.toObject(),
+    priceAfterDiscount:
+      unit && unitPriceAfterDiscount ? unitPriceAfterDiscount : coursePriceAfterDiscount,
+  };
+};
+
+const formatcourses = (course) => ({
+  ...course,
+  priceAfterDiscount: calculatePriceAfterDiscount(course.price, course.discount),
+});
 // Middleware for file uploads
 exports.uploadCourseFiles = uploadMultiple([
   { name: 'mainPhoto', maxCount: 1 },
@@ -31,7 +49,7 @@ exports.createCourse = async (req, res) => {
 
     const course = await courseRepo.createCourse(courseData);
 
-    res.status(201).json({ message: 'Course created successfully', course: course });
+    res.status(201).json({ message: 'Course created successfully', course: formatCourse(course) });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -40,7 +58,9 @@ exports.createCourse = async (req, res) => {
 exports.getAllCourses = async (req, res) => {
   try {
     const courses = await courseRepo.findAllCourses();
-    res.status(200).json({ status: 'Success', length: courses.length, courses });
+    res
+      .status(200)
+      .json({ status: 'Success', length: courses.length, courses: formatCourse(courses) });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -50,16 +70,23 @@ exports.getCourseById = async (req, res) => {
   try {
     const course = await courseRepo.findCourseById(req.params.id);
     if (!course) return res.status(404).json({ error: 'Course not found' });
-    res.status(200).json(course);
+    res.status(200).json({ status: 'Success', course: formatCourse(course) });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
-exports.getAllCoursesByUserId = async (req, res) => {
+exports.getAllCoursesByFreelancerId = async (req, res) => {
   try {
-    const courses = await courseRepo.findAllCourses({ user: req.params.userId });
-    res.status(200).json({ status: 'Success', length: courses.length, courses });
+    const user = req.user;
+    if (user.role !== 'Freelancer') {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const courses = await courseRepo.findAllCourses({ user: user.id });
+    res
+      .status(200)
+      .json({ status: 'Success', length: courses.length, courses: formatcourses(courses) });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -67,7 +94,11 @@ exports.getAllCoursesByUserId = async (req, res) => {
 exports.getPublishedCourses = async (req, res) => {
   try {
     const courses = await courseRepo.findAllCourses({ isPublished: true });
-    res.status(200).json({ status: 'Success', length: courses.length, courses });
+    res.status(200).json({
+      status: 'Success',
+      length: courses.length,
+      courses: courses.map((course) => formatCourse(course)),
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -123,7 +154,9 @@ exports.updateCourse = async (req, res) => {
 
     const updatedCourse = await courseRepo.updateCourse(id, updateData);
 
-    res.status(200).json({ message: 'Course updated successfully', course: updatedCourse });
+    res
+      .status(200)
+      .json({ message: 'Course updated successfully', course: formatCourse(updatedCourse) });
   } catch (error) {
     console.error(error.message);
     res.status(500).json({ error: error.message });
@@ -158,9 +191,11 @@ exports.publishCourse = async (req, res) => {
     if (!course) return res.status(404).json({ error: 'Course not found' });
     if (!course.isApproved) return res.status(403).json({ error: 'Course must be approved first' });
     const publishedCourse = await courseRepo.publishCourse(req.params.courseId);
-    res
-      .status(200)
-      .json({ success: true, message: 'Course Published successfully', course: publishedCourse });
+    res.status(200).json({
+      success: true,
+      message: 'Course Published successfully',
+      course: formatCourse(publishedCourse),
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

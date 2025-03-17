@@ -1,6 +1,16 @@
 const unitRepo = require('../repositories/unit.repository');
 const courseRepo = require('../repositories/course.repository');
 const { uploadMultiple } = require('../../utils/uploadUtil');
+const {
+  calculatePriceAfterDiscount,
+  calculateTotalPrice,
+  calculateTotalDuration,
+} = require('../../utils/calculateUtils');
+
+const formatUnit = (unit) => ({
+  ...unit.toObject(),
+  priceAfterDiscount: calculatePriceAfterDiscount(unit.price, unit.discount),
+});
 
 // Middleware for file uploads
 exports.uploadCourseFiles = uploadMultiple([
@@ -12,7 +22,8 @@ exports.uploadCourseFiles = uploadMultiple([
 exports.createUnit = async (req, res) => {
   try {
     const { courseId } = req.params;
-    const { name, description, price, duration, rating } = req.body;
+    const { name, description, price, duration, rating, discount } = req.body;
+
     // check courseId is exist
     const course = await courseRepo.findCourseById(courseId);
     if (!course) return res.status(404).json({ error: 'Course not found' });
@@ -24,10 +35,11 @@ exports.createUnit = async (req, res) => {
       price: parseFloat(price),
       duration: parseFloat(duration),
       rating,
+      discount: discount || { type: 'none', value: 0 },
     };
     const unit = await unitRepo.createUnit(unitData);
 
-    res.status(201).json({ message: 'Unit created successfully', unit: unit });
+    res.status(201).json({ message: 'Unit created successfully', unit: formatUnit(unit) });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -73,7 +85,7 @@ exports.findUnitsByCourseId = async (req, res) => {
 exports.updateUnit = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, price, duration, rating } = req.body;
+    const { name, description, price, duration, rating, discount } = req.body;
 
     const unit = await unitRepo.findUnitById(id);
     if (!unit) return res.status(404).json({ error: 'Unit not found' });
@@ -84,6 +96,7 @@ exports.updateUnit = async (req, res) => {
     if (price !== undefined) updateData.price = parseFloat(price);
     if (duration !== undefined) updateData.duration = parseFloat(duration);
     if (rating !== undefined) updateData.rating = parseFloat(rating);
+    if (discount !== undefined) updateData.discount = discount;
 
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({ error: 'No valid fields to update' });
@@ -92,20 +105,19 @@ exports.updateUnit = async (req, res) => {
     const updatedUnit = await unitRepo.updateUnit(id, updateData);
 
     const course = await courseRepo.findCourseById(unit.courseId);
-
     if (course) {
       const updatedUnits = await unitRepo.findUnitsByCourseId(course._id);
 
-      if (updateData.duration !== undefined) {
-        course.totalDuration = updatedUnits.reduce((sum, u) => sum + (u.duration || 0), 0);
-      }
-      if (updateData.price !== undefined) {
-        course.price = updatedUnits.reduce((sum, u) => sum + (u.price || 0), 0);
-      }
+      course.totalDuration = calculateTotalDuration(updatedUnits);
+      course.price = calculateTotalPrice(updatedUnits);
+
       await course.save();
     }
 
-    res.status(200).json({ message: 'Unit updated successfully', unit: updatedUnit });
+    res.status(200).json({
+      message: 'Unit updated successfully',
+      unit: formatUnit(updatedUnit),
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

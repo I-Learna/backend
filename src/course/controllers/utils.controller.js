@@ -12,10 +12,10 @@ exports.createReview = async (req, res) => {
       return res.status(400).json({ error: 'All fields are required' });
     }
     const existingCourse = await courseRepo.findCourseById(course);
-
-    if (!existingCourse) {
-      return res.status(404).json({ error: 'Course not found' });
+    if (!existingCourse || !existingCourse.isPublished) {
+      return res.status(404).json({ error: 'Course not found or not published' });
     }
+
     const reviewData = {
       user: req.user._id,
       course,
@@ -39,6 +39,12 @@ exports.getReviews = async (req, res) => {
       return res.status(400).json({ error: 'refId and refType are required' });
     }
 
+    const existingCourse = await courseRepo.findCourseById(course);
+
+    if (!existingCourse || !existingCourse.isPublished) {
+      return res.status(404).json({ error: 'Course not found or not published' });
+    }
+
     const reviews = await courseRepo.getReviews(course);
 
     res.status(200).json({ status: 'success', total: reviews.length, reviews });
@@ -59,8 +65,9 @@ exports.createQuestion = async (req, res) => {
       return res.status(400).json({ error: 'All fields are required' });
     }
     const existingCourse = await courseRepo.findCourseById(course);
-    if (!existingCourse) {
-      return res.status(404).json({ error: 'Course not found' });
+
+    if (!existingCourse || !existingCourse.isPublished) {
+      return res.status(404).json({ error: 'Course not found or not published' });
     }
     const questionData = {
       course,
@@ -121,8 +128,8 @@ exports.getQuestions = async (req, res) => {
 
     const existingCourse = await courseRepo.findCourseById(course);
 
-    if (!existingCourse) {
-      return res.status(404).json({ error: 'Course not found' });
+    if (!existingCourse || !existingCourse.isPublished) {
+      return res.status(404).json({ error: 'Course not found or not published' });
     }
 
     const questions = await courseRepo.getQuestions(course);

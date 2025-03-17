@@ -1,6 +1,11 @@
 const { Course } = require('../models/course.model');
 const { Unit } = require('../models/unit.model');
 const { Session } = require('../models/session.model');
+const {
+  calculatePriceAfterDiscount,
+  calculateTotalDuration,
+  calculateTotalPrice,
+} = require('../../utils/calculateUtils');
 
 exports.createSession = async (sessionData) => {
   const newSession = new Session(sessionData);
@@ -9,12 +14,17 @@ exports.createSession = async (sessionData) => {
   const unit = await Unit.findById(sessionData.unitId);
   if (unit) {
     unit.sessions.push(newSession._id);
+    unit.duration = await Session.findSessionsByUnitId(unit._id).then((sessions) =>
+      calculateTotalDuration(sessions)
+    );
+    unit.price = calculatePriceAfterDiscount(unit.price, unit.discount);
     await unit.save();
 
     const course = await Course.findById(unit.courseId);
     if (course) {
       course.totalSessions += 1;
       course.totalDuration += newSession.duration;
+      course.price = calculateTotalPrice(course.units);
       await course.save();
     }
   }
@@ -34,9 +44,44 @@ exports.findSessionById = async (sessionId) => {
 };
 
 exports.updateSession = async (id, updateData) => {
-  return Session.findByIdAndUpdate(id, updateData, { new: true, runValidators: true })
-    .populate('unitId', 'name description')
-    .select('-__v ');
+  const session = await Session.findById(id);
+  if (!session) {
+    throw new Error('Session not found');
+  }
+
+  const updatedSession = await Session.findByIdAndUpdate(id, updateData, {
+    new: true,
+    runValidators: true,
+  });
+
+  const unit = await Unit.findById(session.unitId);
+  if (unit) {
+    if (updateData.duration) {
+      unit.duration = await Session.findSessionsByUnitId(unit._id).then((sessions) =>
+        calculateTotalDuration(sessions)
+      );
+    }
+
+    if (unit.discount) {
+      unit.price = calculatePriceAfterDiscount(unit.price, unit.discount);
+    }
+
+    await unit.save();
+
+    const course = await Course.findById(unit.courseId);
+    if (course) {
+      course.totalDuration = await Unit.findUnitsByCourseId(course._id).then((units) =>
+        calculateTotalDuration(units)
+      );
+      course.price = await Unit.findUnitsByCourseId(course._id).then((units) =>
+        calculateTotalPrice(units)
+      );
+
+      await course.save();
+    }
+  }
+
+  return updatedSession;
 };
 
 exports.deleteSession = async (id) => {
