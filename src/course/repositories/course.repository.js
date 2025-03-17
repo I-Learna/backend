@@ -12,12 +12,15 @@ exports.findAllCourses = async (filter = {}) => {
     .populate('industry', 'name ')
     .populate('sector', 'name ')
     .populate('coupon', 'name')
-    .select('-__v  ');
+    .select(
+      '-__v -subtitle -whatYouLearn -requirements -units -testVideoUrl -isApproved -isPublished -reviews -qna -slug'
+    );
 };
 
+// industry , sector  , createdBy name , createdby_profile image  , createdby bio ,   course name , course description ,   course main photo ,  last update of course , level , language ,  total hours of units , total number of sessions  , price , discount , priceAfterDiscount ,  total numbers of reviews , average of rate  , whatYouLearn ,  requirements  , units , and sessions
 exports.findCourseById = async (id) => {
   return Course.findById(id)
-    .populate('user', 'name profileImage ')
+    .populate('user', 'name profileImage bio')
     .populate('industry', 'name ')
     .populate('sector', 'name ')
     .populate({
@@ -40,7 +43,7 @@ exports.findCourseById = async (id) => {
       populate: { path: 'sessions', select: '-__v' },
       select: '-__v ',
     })
-    .select('-__v  ');
+    .select('-__v -subtitle  -isApproved  -reviews -qna -slug');
 };
 
 exports.updateCourse = async (id, updateData) => {
@@ -76,29 +79,45 @@ exports.approveCourse = async (id) => {
     .select('-__v  ');
 };
 
+// industry , sector  , createdBy name , createdby_profile image ,   course name , course description ,   course main photo ,  last update of course , level , language ,  total hours of units , total number of sessions  , price , discount , priceAfterDiscount ,  total numbers of reviews , average of rate
 exports.publishCourse = async (id) => {
   return Course.findByIdAndUpdate(id, { isPublished: true })
+    .select('createdAt updatedAt ')
     .populate('user', 'name  profileImage ')
     .populate('industry', 'name ')
     .populate('sector', 'name ')
     .populate('coupon', 'name')
-    .populate({
-      path: 'units',
-      populate: { path: 'sessions', select: '-__v' },
-      select: '-__v ',
-    })
-    .select('-__v ');
+    .select(
+      '-__v -subtitle -whatYouLearn -requirements -units -testVideoUrl -isApproved -isPublished -reviews -qna -slug'
+    );
 };
 
 exports.createReview = async (reviewData) => {
   const newReview = new Review(reviewData);
   await newReview.save();
-  await Course.findByIdAndUpdate(reviewData.course, { $push: { reviews: newReview._id } });
+
+  const course = await Course.findById(reviewData.course);
+  if (course) {
+    const reviews = await Review.find({ course: reviewData.course });
+    const totalReviews = reviews.length;
+    const averageRating = reviews.reduce((acc, r) => acc + r.rating, 0) / totalReviews;
+
+    await Course.findByIdAndUpdate(reviewData.course, {
+      totalReviews,
+      averageRating,
+      $push: { reviews: newReview._id },
+    });
+  }
+
   return newReview;
 };
 
+// total reviews , average rate ,   percentage of 5 star review . percentage of 4 star reviews   , percentage of 3 stars , percentage of 2 starts , percentage of 1 stars,     reviews [  {    createdby , created date ,  rate ,  description }       ]
 exports.getReviews = async (course) => {
-  return Review.find({ course }).populate('user', 'name  profileImage').select('-__v ');
+  return Review.find({ course })
+    .populate('user', 'name  profileImage')
+    .populate('course', 'totalReviews averageRating')
+    .select('-__v ');
 };
 
 exports.createQuestion = async (questionData) => {

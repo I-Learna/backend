@@ -5,7 +5,7 @@ const utilsController = require('../controllers/utils.controller');
 const { protect } = require('../../middlewares/authMiddleware');
 
 router.get('/publishedcourses', courseController.getPublishedCourses);
-router.get('/user/:userId', courseController.getAllCoursesByUserId);
+router.get('/freelancer', protect, courseController.getAllCoursesByFreelancerId);
 router.put('/:courseId/approve', courseController.approveCourse);
 router.put('/:courseId/publish', courseController.publishCourse);
 
