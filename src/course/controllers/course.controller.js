@@ -1,6 +1,6 @@
 const qs = require('qs');
 const courseRepo = require('../repositories/course.repository');
-const { uploadMultiple, uploadToVimeo } = require('../utils/uploadUtil');
+const { uploadMultiple, uploadToVimeo } = require('../../utils/uploadUtil');
 
 // Middleware for file uploads
 exports.uploadCourseFiles = uploadMultiple([
@@ -132,7 +132,7 @@ exports.updateCourse = async (req, res) => {
 
 exports.deleteCourse = async (req, res) => {
   try {
-    const deletedCourse = await courseRepo.delete(req.params.id);
+    const deletedCourse = await courseRepo.updateCourse(req.params.id, { isPublished: false });
     if (!deletedCourse) {
       return res.status(404).json({ message: 'Course not found' });
     }
