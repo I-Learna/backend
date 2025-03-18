@@ -36,7 +36,7 @@ exports.getReviews = async (req, res) => {
     const { course } = req.params;
 
     if (!course) {
-      return res.status(400).json({ error: 'refId and refType are required' });
+      return res.status(400).json({ error: 'Course Id is required' });
     }
 
     const existingCourse = await courseRepo.findCourseById(course);
@@ -46,8 +46,30 @@ exports.getReviews = async (req, res) => {
     }
 
     const reviews = await courseRepo.getReviews(course);
+    const totalReviews = reviews.length;
 
-    res.status(200).json({ status: 'success', total: reviews.length, reviews });
+    const ratingCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+
+    reviews.forEach((review) => {
+      const roundedRating = Math.round(review.rating);
+      if (ratingCounts[roundedRating] !== undefined) {
+        ratingCounts[roundedRating] += 1;
+      }
+    });
+
+    const ratingPercentages = {};
+    Object.keys(ratingCounts).forEach((rating) => {
+      ratingPercentages[rating] =
+        totalReviews > 0 ? Math.round((ratingCounts[rating] / totalReviews) * 100) + '%' : '0%';
+    });
+
+    res.status(200).json({
+      status: 'success',
+      totalReviews,
+      ratingCounts,
+      ratingPercentages,
+      reviews,
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -123,7 +145,7 @@ exports.getQuestions = async (req, res) => {
     const { course } = req.params;
 
     if (!course) {
-      return res.status(400).json({ error: 'refId and refType are required' });
+      return res.status(400).json({ error: 'Course Id are required' });
     }
 
     const existingCourse = await courseRepo.findCourseById(course);
