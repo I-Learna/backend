@@ -1,4 +1,4 @@
-const courseRepo = require('../repositories/course.repository');
+const courseRepo = require('../repositories/liveCourse.repository');
 
 exports.createReview = async (req, res) => {
   try {

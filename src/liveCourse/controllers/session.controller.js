@@ -1,12 +1,8 @@
 const sessionRepo = require('../repositories/session.repository');
 const { uploadMultiple, uploadToVimeo } = require('../../utils/uploadUtil');
-const courseRepo = require('../repositories/course.repository');
+const courseRepo = require('../repositories/liveCourse.repository');
 const unitRepo = require('../repositories/unit.repository');
-const {
-  calculatePriceAfterDiscount,
-  calculateTotalDuration,
-  calculateTotalPrice,
-} = require('../../utils/calculateUtils');
+const { calculateTotalDuration } = require('../../utils/calculateUtils');
 
 // Middleware for file uploads
 exports.uploadCourseFiles = uploadMultiple([
@@ -45,14 +41,11 @@ exports.createSession = async (req, res) => {
       unit.duration = await sessionRepo
         .findSessionsByUnitId(unit._id)
         .then((sessions) => calculateTotalDuration(sessions));
-      unit.price = calculatePriceAfterDiscount(unit.price, unit.discount);
-      await unit.save();
 
       const course = await courseRepo.findCourseById(unit.courseId);
       if (course) {
         const updatedUnits = await unitRepo.findUnitsByCourseId(course._id);
         course.totalDuration = calculateTotalDuration(updatedUnits);
-        course.price = calculateTotalPrice(updatedUnits);
         await course.save();
       }
     }
@@ -136,7 +129,6 @@ exports.updateSession = async (req, res) => {
           (sum, u) => sum + u.sessions.reduce((sSum, s) => sSum + (s.duration || 0), 0),
           0
         );
-        course.price = calculateTotalPrice(updatedUnits);
         await course.save();
       }
     }
