@@ -3,6 +3,24 @@ const courseRepo = require('../repositories/liveCourse.repository');
 const { uploadMultiple, uploadToVimeo } = require('../../utils/uploadUtil');
 const { calculatePriceAfterDiscount } = require('../../utils/calculateUtils');
 
+const formatCourse = (course, unit = null) => {
+  const coursePriceAfterDiscount = calculatePriceAfterDiscount(course.price, course.discount);
+  const unitPriceAfterDiscount = unit
+    ? calculatePriceAfterDiscount(unit.price, unit.discount)
+    : null;
+
+  return {
+    ...course.toObject(),
+    priceAfterDiscount:
+      unit && unitPriceAfterDiscount ? unitPriceAfterDiscount : coursePriceAfterDiscount,
+  };
+};
+
+const formatcourses = (course) => ({
+  ...course,
+  priceAfterDiscount: calculatePriceAfterDiscount(course.price, course.discount),
+});
+
 // Middleware for file uploads
 exports.uploadCourseFiles = uploadMultiple([
   { name: 'mainPhoto', maxCount: 1 },

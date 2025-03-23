@@ -1,4 +1,6 @@
-const { Course, Review, QA } = require('../models/liveCourse.model');
+const { Course } = require('../models/liveCourse.model');
+const { QA } = require('../../shared/models/qa.schema');
+const { Review } = require('../../shared/models/review.schema');
 
 exports.createCourse = async (courseData) => {
   const newCourse = new Course(courseData);
@@ -7,43 +9,33 @@ exports.createCourse = async (courseData) => {
 };
 
 exports.findAllCourses = async (filter = {}) => {
-  return Course.find(filter)
-    .populate('user', 'name profileImage ')
-    .populate('industry', 'name ')
-    .populate('sector', 'name ')
-    .populate('coupon', 'name')
-    .select(
-      '-__v -subtitle -whatYouLearn -requirements -units -testVideoUrl -isApproved -isPublished -reviews -qna -slug'
-    );
+  return (
+    Course.find(filter)
+      .populate('user', 'name profileImage ')
+      .populate('industry', 'name ')
+      .populate('sector', 'name ')
+      // .populate('coupon', 'name')
+      .select(
+        '-__v -subtitle -whatYouLearn -requirements -units -testVideoUrl -isApproved -isPublished -reviews -qna -slug'
+      )
+  );
 };
 
 // industry , sector  , createdBy name , createdby_profile image  , createdby bio ,   course name , course description ,   course main photo ,  last update of course , level , language ,  total hours of units , total number of sessions  , price , discount , priceAfterDiscount ,  total numbers of reviews , average of rate  , whatYouLearn ,  requirements  , units , and sessions
 exports.findCourseById = async (id) => {
-  return Course.findById(id)
-    .populate('user', 'name profileImage bio')
-    .populate('industry', 'name ')
-    .populate('sector', 'name ')
-    .populate({
-      path: 'qna',
-      populate: [
-        { path: 'course', select: 'name mainPhoto level language price' },
-        { path: 'askedBy', select: 'name profileImage' },
-        { path: 'answers.answeredBy', select: 'name role profileImage' },
-      ],
-      select: 'question answers',
-    })
-    .populate({
-      path: 'reviews',
-      populate: { path: 'user', select: 'name profileImage' },
-      select: 'review rating createdAt updatedAt',
-    })
-    .populate('coupon', 'name')
-    .populate({
-      path: 'units',
-      populate: { path: 'sessions', select: '-__v' },
-      select: '-__v ',
-    })
-    .select('-__v -subtitle  -isApproved  -reviews -qna -slug');
+  return (
+    Course.findById(id)
+      .populate('user', 'name profileImage bio')
+      .populate('industry', 'name ')
+      .populate('sector', 'name ')
+      // .populate('coupon', 'name')
+      .populate({
+        path: 'units',
+        populate: { path: 'sessions', select: '-__v' },
+        select: '-__v ',
+      })
+      .select('-__v -subtitle  -isApproved  -reviews -qna -slug')
+  );
 };
 
 exports.updateCourse = async (id, updateData) => {

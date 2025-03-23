@@ -1,4 +1,6 @@
-const { Course, Review, QA } = require('../models/recordedCourse.model');
+const { Course } = require('../models/recordedCourse.model');
+const { QA } = require('../../shared/models/qa.schema');
+const { Review } = require('../../shared/models/review.schema');
 
 exports.createCourse = async (courseData) => {
   const newCourse = new Course(courseData);

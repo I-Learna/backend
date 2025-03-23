@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
-const slugify = require('slugify');
+const slugMiddleware = require('../../shared/middleware/slugMiddleware');
 
 // Course
-const CourseSchema = new Schema(
+const recordedCourseSchema = new Schema(
   {
     industry: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Industry', required: true }],
     sector: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Sector', required: true }],
@@ -42,54 +42,9 @@ const CourseSchema = new Schema(
   { timestamps: true }
 );
 
-// slug middleware before saving
-CourseSchema.pre('save', async function (next) {
-  if (!this.isModified('name')) return next(); // only update slug if name changes
+// Apply slug middleware
+slugMiddleware(recordedCourseSchema, 'RecordedCourse');
 
-  let baseSlug = slugify(this.name, { lower: true, strict: true });
-  let uniqueSlug = baseSlug;
-  let counter = 1;
+const Course = mongoose.model('RecordedCourse', recordedCourseSchema);
 
-  // checkin if slug already exists in the db
-  while (await mongoose.model('Course').exists({ slug: uniqueSlug })) {
-    uniqueSlug = `${baseSlug}-${counter}`;
-    counter++;
-  }
-
-  this.slug = uniqueSlug;
-  next();
-});
-
-// Review
-const ReviewSchema = new Schema(
-  {
-    course: { type: Schema.Types.ObjectId, ref: 'Course', required: true },
-    user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    review: { type: String, required: true },
-    rating: { type: Number, min: 1, max: 5, default: 0 },
-  },
-  { timestamps: true }
-);
-
-// QA
-const QASchema = new Schema(
-  {
-    course: { type: Schema.Types.ObjectId, ref: 'Course', required: true },
-    question: { type: String, required: true },
-    askedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    answers: [
-      {
-        answer: { type: String, required: true },
-        answeredBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-        createdAt: { type: Date, default: Date.now },
-      },
-    ],
-  },
-  { timestamps: true }
-);
-
-const Course = mongoose.model('Course', CourseSchema);
-const Review = mongoose.model('Review', ReviewSchema);
-const QA = mongoose.model('QA', QASchema);
-
-module.exports = { Course, Review, QA };
+module.exports = { Course };

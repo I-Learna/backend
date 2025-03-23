@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
 // Unit
-const UnitSchema = new Schema({
+const liveUnitSchema = new Schema({
   courseId: { type: Schema.Types.ObjectId, ref: 'Course', required: true },
   name: { type: String, required: true },
   description: { type: String },
@@ -21,7 +21,7 @@ const UnitSchema = new Schema({
 });
 
 // virtual field for final price calc
-UnitSchema.virtual('finalPrice').get(function () {
+liveUnitSchema.virtual('finalPrice').get(function () {
   if (this.discount.type === 'amount') {
     return Math.max(this.price - this.discount.value, 0);
   }
@@ -31,9 +31,9 @@ UnitSchema.virtual('finalPrice').get(function () {
   return this.price;
 });
 
-UnitSchema.set('toJSON', { virtuals: true });
-UnitSchema.set('toObject', { virtuals: true });
+liveUnitSchema.set('toJSON', { virtuals: true });
+liveUnitSchema.set('toObject', { virtuals: true });
 
-const Unit = mongoose.model('Unit', UnitSchema);
+const Unit = mongoose.model('LiveUnit', liveUnitSchema);
 
 module.exports = { Unit };
