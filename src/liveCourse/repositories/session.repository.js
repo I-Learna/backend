@@ -1,4 +1,4 @@
-const { Course } = require('../models/course.model');
+const { Course } = require('../models/liveCourse.model');
 const { Unit } = require('../models/unit.model');
 const { Session } = require('../models/session.model');
 const {

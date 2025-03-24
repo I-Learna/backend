@@ -1,5 +1,5 @@
 const qs = require('qs');
-const courseRepo = require('../repositories/course.repository');
+const courseRepo = require('../repositories/recordedCourse.repository');
 const { uploadMultiple, uploadToVimeo } = require('../../utils/uploadUtil');
 const { calculatePriceAfterDiscount } = require('../../utils/calculateUtils');
 

@@ -1,5 +1,5 @@
 const unitRepo = require('../repositories/unit.repository');
-const courseRepo = require('../repositories/course.repository');
+const courseRepo = require('../repositories/recordedCourse.repository');
 const { uploadMultiple } = require('../../utils/uploadUtil');
 const {
   calculatePriceAfterDiscount,

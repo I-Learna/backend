@@ -1,157 +1,158 @@
-const qs = require('qs');
-const courseRepo = require('../repositories/course.repository');
-const { uploadMultiple, uploadToVimeo } = require('../utils/uploadUtil');
+// const qs = require('qs');
+// const courseRepo = require('../repositories/course.repository');
+// const { uploadMultiple, uploadToVimeo } = require('../utils/uploadUtil');
 
-// Middleware for file uploads
-exports.uploadCourseFiles = uploadMultiple([
-  { name: 'mainPhoto', maxCount: 1 },
-  { name: 'videoUrl', maxCount: 1 },
-  { name: 'documents', maxCount: 10 },
-]);
+// // Middleware for file uploads
+// exports.uploadCourseFiles = uploadMultiple([
+//   { name: 'mainPhoto', maxCount: 1 },
+//   { name: 'videoUrl', maxCount: 1 },
+//   { name: 'documents', maxCount: 10 },
+// ]);
 
-exports.createCourse = async (req, res) => {
-  try {
-    const user = req.user;
+// exports.createCourse = async (req, res) => {
+//   try {
+//     const user = req.user;
 
-    const { body, files } = req;
-    const parsedBody = qs.parse(body);
+//     const { body, files } = req;
+//     const parsedBody = qs.parse(body);
 
-    const mainPhotoUrl = files?.mainPhoto?.[0]?.path || null;
+//     const mainPhotoUrl = files?.mainPhoto?.[0]?.path || null;
 
-    const videoUrl = files.videoUrl
-      ? await uploadToVimeo(files.videoUrl[0].path, files.videoUrl[0].originalname)
-      : null;
+//     const videoUrl = files.videoUrl
+//       ? await uploadToVimeo(files.videoUrl[0].path, files.videoUrl[0].originalname)
+//       : null;
 
-    const courseData = {
-      ...parsedBody,
-      mainPhoto: mainPhotoUrl,
-      testVideoUrl: videoUrl,
-      user: user,
-    };
+//     const courseData = {
+//       ...parsedBody,
+//       mainPhoto: mainPhotoUrl,
+//       testVideoUrl: videoUrl,
+//       user: user,
+//     };
 
-    const course = await courseRepo.createCourse(courseData);
+//     const course = await courseRepo.createCourse(courseData);
 
-    res.status(201).json({ message: 'Course created successfully', course: course });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+//     res.status(201).json({ message: 'Course created successfully', course: course });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
 
-exports.getAllCourses = async (req, res) => {
-  try {
-    const courses = await courseRepo.findAllCourses();
-    res.status(200).json({ status: 'Success', length: courses.length, courses });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+// exports.getAllCourses = async (req, res) => {
+//   try {
+//     const courses = await courseRepo.findAllCourses();
+//     res.status(200).json({ status: 'Success', length: courses.length, courses });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
 
-exports.getCourseById = async (req, res) => {
-  try {
-    const course = await courseRepo.findCourseById(req.params.id);
-    if (!course) return res.status(404).json({ error: 'Course not found' });
-    res.status(200).json(course);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+// exports.getCourseById = async (req, res) => {
+//   try {
+//     const course = await courseRepo.findCourseById(req.params.id);
+//     if (!course) return res.status(404).json({ error: 'Course not found' });
+//     res.status(200).json(course);
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
 
-exports.getAllCoursesByUserId = async (req, res) => {
-  try {
-    const courses = await courseRepo.findAllCourses({ user: req.params.userId });
-    res.status(200).json({ status: 'Success', length: courses.length, courses });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-exports.getPublishedCourses = async (req, res) => {
-  try {
-    const courses = await courseRepo.findAllCourses({ isPublished: true });
-    res.status(200).json({ status: 'Success', length: courses.length, courses });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+// exports.getAllCoursesByUserId = async (req, res) => {
+//   try {
+//     const courses = await courseRepo.findAllCourses({ user: req.params.userId });
+//     res.status(200).json({ status: 'Success', length: courses.length, courses });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
+// exports.getPublishedCourses = async (req, res) => {
+//   try {
+//     const courses = await courseRepo.findAllCourses({ isPublished: true });
+//     res.status(200).json({ status: 'Success', length: courses.length, courses });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
 
-exports.updateCourse = async (req, res) => {
-  const { body, files } = req;
-  const { id } = req.params;
-  const user = req.user;
+// exports.updateCourse = async (req, res) => {
+//   const { body, files } = req;
+//   const { id } = req.params;
+//   const user = req.user;
 
-  if (!user) return res.status(401).json({ error: 'Not authenticated' });
+//   if (!user) return res.status(401).json({ error: 'Not authenticated' });
 
-  try {
-    const existingCourse = await courseRepo.findCourseById(id);
-    if (!existingCourse) return res.status(404).json({ error: 'Course not found' });
+//   try {
+//     const existingCourse = await courseRepo.findCourseById(id);
+//     if (!existingCourse) return res.status(404).json({ error: 'Course not found' });
 
-    const updateData = {};
+//     const updateData = {};
 
-    if (body.name) updateData.name = body.name;
-    if (body.description) updateData.description = body.description;
-    if (body.level) updateData.level = body.level;
-    if (body.language) updateData.language = body.language;
-    if (body.subtitle) updateData.subtitle = body.subtitle;
-    if (body.whatYouLearn) updateData.whatYouLearn = JSON.parse(body.whatYouLearn);
-    if (body.requirements) updateData.requirements = JSON.parse(body.requirements);
-    if (body.totalDuration) updateData.totalDuration = parseFloat(body.totalDuration);
-    if (body.totalSessions) updateData.totalSessions = parseInt(body.totalSessions, 10);
-    if (body.totalUnits) updateData.totalUnits = parseInt(body.totalUnits, 10);
-    if (body.price) updateData.price = parseFloat(body.price);
-    if (body.rating) updateData.rating = parseFloat(body.rating);
-    if (body.discount) updateData.discount = body.discount === 'true';
-    if (body.isApproved) updateData.isApproved = body.isApproved === 'true';
-    if (body.isPublished) updateData.isPublished = body.isPublished === 'true';
+//     if (body.name) updateData.name = body.name;
+//     if (body.description) updateData.description = body.description;
+//     if (body.level) updateData.level = body.level;
+//     if (body.language) updateData.language = body.language;
+//     if (body.subtitle) updateData.subtitle = body.subtitle;
+//     if (body.whatYouLearn) updateData.whatYouLearn = JSON.parse(body.whatYouLearn);
+//     if (body.requirements) updateData.requirements = JSON.parse(body.requirements);
+//     if (body.totalDuration) updateData.totalDuration = parseFloat(body.totalDuration);
+//     if (body.totalSessions) updateData.totalSessions = parseInt(body.totalSessions, 10);
+//     if (body.totalUnits) updateData.totalUnits = parseInt(body.totalUnits, 10);
+//     if (body.price) updateData.price = parseFloat(body.price);
+//     if (body.rating) updateData.rating = parseFloat(body.rating);
+//     if (body.discount) updateData.discount = body.discount === 'true';
+//     if (body.isApproved) updateData.isApproved = body.isApproved === 'true';
+//     if (body.isPublished) updateData.isPublished = body.isPublished === 'true';
 
-    if (files?.mainPhoto?.[0]?.path) updateData.mainPhoto = files.mainPhoto[0].path;
-    if (files?.videoUrl?.[0]) {
-      updateData.videoUrl = await uploadToVimeo(
-        files.videoUrl[0].path,
-        files.videoUrl[0].originalname
-      );
-    } else if (body.videoUrl) {
-      updateData.videoUrl = body.videoUrl;
-    }
-    if (files?.documents?.length) updateData.documents = files.documents.map((file) => file.path);
+//     if (files?.mainPhoto?.[0]?.path) updateData.mainPhoto = files.mainPhoto[0].path;
+//     if (files?.videoUrl?.[0]) {
+//       updateData.videoUrl = await uploadToVimeo(
+//         files.videoUrl[0].path,
+//         files.videoUrl[0].originalname
+//       );
+//     } else if (body.videoUrl) {
+//       updateData.videoUrl = body.videoUrl;
+//     }
+//     if (files?.documents?.length) updateData.documents = files.documents.map((file) => file.path);
 
-    Object.keys(updateData).forEach(
-      (key) => updateData[key] === undefined && delete updateData[key]
-    );
+//     Object.keys(updateData).forEach(
+//       (key) => updateData[key] === undefined && delete updateData[key]
+//     );
 
-    if (Object.keys(updateData).length === 0) {
-      return res.status(400).json({ error: 'No valid fields to update' });
-    }
+//     if (Object.keys(updateData).length === 0) {
+//       return res.status(400).json({ error: 'No valid fields to update' });
+//     }
 
-    const updatedCourse = await courseRepo.updateCourse(id, updateData);
+//     const updatedCourse = await courseRepo.updateCourse(id, updateData);
 
-    res.status(200).json({ message: 'Course updated successfully', course: updatedCourse });
-  } catch (error) {
-    console.error(error.message);
-    res.status(500).json({ error: error.message });
-  }
-};
+//     res.status(200).json({ message: 'Course updated successfully', course: updatedCourse });
+//   } catch (error) {
+//     console.error(error.message);
+//     res.status(500).json({ error: error.message });
+//   }
+// };
 
-exports.deleteCourse = async (req, res) => {
-  try {
-    const deletedCourse = await courseRepo.delete(req.params.id);
-    if (!deletedCourse) {
-      return res.status(404).json({ message: 'Course not found' });
-    }
-    res.status(200).json({ message: 'Course deleted successfully' });
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-};
+// exports.deleteCourse = async (req, res) => {
+//   try {
+//     const deletedCourse = await courseRepo.delete(req.params.id);
+//     if (!deletedCourse) {
+//       return res.status(404).json({ message: 'Course not found' });
+//     }
+//     res.status(200).json({ message: 'Course deleted successfully' });
+//   } catch (error) {
+//     res.status(400).json({ message: error.message });
+//   }
+// };
 
-exports.approveCourse = async (req, res) => {
-  try {
-    const course = await courseRepo.approveCourse(req.params.courseId);
-    if (!course) return res.status(404).json({ error: 'Course not found' });
-    res.status(200).json({ success: true, message: 'Course approved successfully' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+// exports.approveCourse = async (req, res) => {
+//   try {
+//     const course = await courseRepo.approveCourse(req.params.courseId);
+//     if (!course) return res.status(404).json({ error: 'Course not found' });
+//     res.status(200).json({ success: true, message: 'Course approved successfully' });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
 
+<<<<<<< HEAD
 exports.publishCourse = async (req, res) => {
   try {
     const course = await courseRepo.findCourseById(req.params.courseId);
@@ -165,3 +166,18 @@ exports.publishCourse = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+=======
+// exports.publishCourse = async (req, res) => {
+//   try {
+//     const course = await courseRepo.findCourseById(req.params.courseId);
+//     if (!course) return res.status(404).json({ error: 'Course not found' });
+//     if (!course.isApproved) return res.status(403).json({ error: 'Course must be approved first' });
+//     const publishedCourse = await courseRepo.publishCourse(req.params.courseId);
+//     res
+//       .status(200)
+//       .json({ success: true, message: 'Course Published successfully', course: publishedCourse });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
+>>>>>>> 10e5509fd847d9f1893743724ab83bc7b446c532
