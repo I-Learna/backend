@@ -17,7 +17,7 @@ const recordedCourseSchema = new Schema(
     subtitle: { type: String, enum: ['english', 'arabic'], required: true },
     whatYouLearn: [{ type: String }],
     requirements: [{ type: String }],
-    units: [{ type: Schema.Types.ObjectId, ref: 'Unit', default: [] }],
+    units: [{ type: Schema.Types.ObjectId, ref: 'RecordedUnit', default: [] }],
     totalDuration: { type: Number, default: 0 },
     totalSessions: { type: Number, default: 0 },
     totalUnits: { type: Number, default: 0 },
@@ -38,6 +38,7 @@ const recordedCourseSchema = new Schema(
     qna: [{ type: Schema.Types.ObjectId, ref: 'QA', default: [] }],
     totalReviews: { type: Number, default: 0 },
     averageRating: { type: Number, default: 0 },
+    type: { type: String, default: 'Recorded' },
   },
   { timestamps: true }
 );

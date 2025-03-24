@@ -1,16 +1,7 @@
 const unitRepo = require('../repositories/unit.repository');
 const courseRepo = require('../repositories/recordedCourse.repository');
 const { uploadMultiple } = require('../../utils/uploadUtil');
-const {
-  calculatePriceAfterDiscount,
-  calculateTotalPrice,
-  calculateTotalDuration,
-} = require('../../utils/calculateUtils');
-
-const formatUnit = (unit) => ({
-  ...unit.toObject(),
-  priceAfterDiscount: calculatePriceAfterDiscount(unit.price, unit.discount),
-});
+const { calculateTotalPrice, calculateTotalDuration } = require('../../utils/calculateUtils');
 
 // Middleware for file uploads
 exports.uploadCourseFiles = uploadMultiple([
@@ -22,7 +13,7 @@ exports.uploadCourseFiles = uploadMultiple([
 exports.createUnit = async (req, res) => {
   try {
     const { courseId } = req.params;
-    const { name, description, price, duration, rating, discount } = req.body;
+    const { name, description, price, duration, rating } = req.body;
 
     // check courseId is exist
     const course = await courseRepo.findCourseById(courseId);
@@ -35,11 +26,10 @@ exports.createUnit = async (req, res) => {
       price: parseFloat(price),
       duration: parseFloat(duration),
       rating,
-      discount: discount || { type: 'none', value: 0 },
     };
     const unit = await unitRepo.createUnit(unitData);
 
-    res.status(201).json({ message: 'Unit created successfully', unit: formatUnit(unit) });
+    res.status(201).json({ message: 'Unit created successfully', unit: unit });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -85,7 +75,7 @@ exports.findUnitsByCourseId = async (req, res) => {
 exports.updateUnit = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, price, duration, rating, discount } = req.body;
+    const { name, description, price, duration, rating } = req.body;
 
     const unit = await unitRepo.findUnitById(id);
     if (!unit) return res.status(404).json({ error: 'Unit not found' });
@@ -96,7 +86,6 @@ exports.updateUnit = async (req, res) => {
     if (price !== undefined) updateData.price = parseFloat(price);
     if (duration !== undefined) updateData.duration = parseFloat(duration);
     if (rating !== undefined) updateData.rating = parseFloat(rating);
-    if (discount !== undefined) updateData.discount = discount;
 
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({ error: 'No valid fields to update' });
@@ -116,7 +105,7 @@ exports.updateUnit = async (req, res) => {
 
     res.status(200).json({
       message: 'Unit updated successfully',
-      unit: formatUnit(updatedUnit),
+      unit: updatedUnit,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

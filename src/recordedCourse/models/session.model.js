@@ -3,7 +3,7 @@ const { Schema } = mongoose;
 
 // Session
 const SessionSchema = new Schema({
-  unitId: { type: Schema.Types.ObjectId, ref: 'Unit', required: true },
+  unitId: { type: Schema.Types.ObjectId, ref: 'RecordedUnit', required: true },
   name: { type: String, required: true },
   duration: { type: Number, required: true },
   videoUrl: { type: String, required: true },
@@ -11,6 +11,6 @@ const SessionSchema = new Schema({
   documents: [{ type: String, default: [] }],
 });
 
-const Session = mongoose.model('Session', SessionSchema);
+const Session = mongoose.model('RecordedSession', SessionSchema);
 
 module.exports = { Session };

@@ -1,11 +1,7 @@
 const { Course } = require('../models/recordedCourse.model');
 const { Unit } = require('../models/unit.model');
 const { Session } = require('../models/session.model');
-const {
-  calculatePriceAfterDiscount,
-  calculateTotalDuration,
-  calculateTotalPrice,
-} = require('../../utils/calculateUtils');
+const { calculateTotalDuration, calculateTotalPrice } = require('../../utils/calculateUtils');
 
 exports.createSession = async (sessionData) => {
   const newSession = new Session(sessionData);
@@ -17,7 +13,6 @@ exports.createSession = async (sessionData) => {
     unit.duration = await Session.findSessionsByUnitId(unit._id).then((sessions) =>
       calculateTotalDuration(sessions)
     );
-    unit.price = calculatePriceAfterDiscount(unit.price, unit.discount);
     await unit.save();
 
     const course = await Course.findById(unit.courseId);
@@ -61,11 +56,6 @@ exports.updateSession = async (id, updateData) => {
         calculateTotalDuration(sessions)
       );
     }
-
-    if (unit.discount) {
-      unit.price = calculatePriceAfterDiscount(unit.price, unit.discount);
-    }
-
     await unit.save();
 
     const course = await Course.findById(unit.courseId);

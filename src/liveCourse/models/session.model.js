@@ -3,7 +3,7 @@ const { Schema } = mongoose;
 
 // Session
 const liveSessionSchema = new Schema({
-  unitId: { type: Schema.Types.ObjectId, ref: 'Unit', required: true },
+  unitId: { type: Schema.Types.ObjectId, ref: 'LiveUnit', required: true },
   name: { type: String, required: true },
   duration: { type: Number, required: true },
   videoUrl: { type: String },

@@ -60,7 +60,7 @@ exports.getAllCourses = async (req, res) => {
     const courses = await courseRepo.findAllCourses();
     res
       .status(200)
-      .json({ status: 'Success', length: courses.length, courses: formatCourse(courses) });
+      .json({ status: 'Success', length: courses.length, courses: formatcourses(courses) });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -83,7 +83,11 @@ exports.getAllCoursesByFreelancerId = async (req, res) => {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const courses = await courseRepo.findAllCourses({ user: user.id });
+    const courses = await courseRepo.findAllCourses({
+      user: user.id,
+      type: 'Recorded',
+      isPublished: true,
+    });
     res
       .status(200)
       .json({ status: 'Success', length: courses.length, courses: formatcourses(courses) });

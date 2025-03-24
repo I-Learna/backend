@@ -1,11 +1,7 @@
 const { Course } = require('../models/liveCourse.model');
 const { Unit } = require('../models/unit.model');
 const { Session } = require('../models/session.model');
-const {
-  calculatePriceAfterDiscount,
-  calculateTotalDuration,
-  calculateTotalPrice,
-} = require('../../utils/calculateUtils');
+const { calculateTotalDuration, calculateTotalPrice } = require('../../utils/calculateUtils');
 
 exports.createSession = async (sessionData) => {
   const newSession = new Session(sessionData);
@@ -14,16 +10,19 @@ exports.createSession = async (sessionData) => {
   const unit = await Unit.findById(sessionData.unitId);
   if (unit) {
     unit.sessions.push(newSession._id);
-    unit.duration = await Session.findSessionsByUnitId(unit._id).then((sessions) =>
-      calculateTotalDuration(sessions)
-    );
-    unit.price = calculatePriceAfterDiscount(unit.price, unit.discount);
+
+    unit.duration = (unit.duration || 0) + newSession.duration;
+
     await unit.save();
+    console.log('unit.2', unit.price);
 
     const course = await Course.findById(unit.courseId);
     if (course) {
       course.totalSessions += 1;
-      course.totalDuration += newSession.duration;
+
+      course.totalDuration = (course.totalDuration || 0) + newSession.duration;
+
+      console.log('course.2', course.price);
       course.price = calculateTotalPrice(course.units);
       await course.save();
     }
@@ -60,10 +59,6 @@ exports.updateSession = async (id, updateData) => {
       unit.duration = await Session.findSessionsByUnitId(unit._id).then((sessions) =>
         calculateTotalDuration(sessions)
       );
-    }
-
-    if (unit.discount) {
-      unit.price = calculatePriceAfterDiscount(unit.price, unit.discount);
     }
 
     await unit.save();

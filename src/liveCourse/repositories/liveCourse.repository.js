@@ -34,7 +34,7 @@ exports.findCourseById = async (id) => {
         populate: { path: 'sessions', select: '-__v' },
         select: '-__v ',
       })
-      .select('-__v -subtitle  -isApproved  -reviews -qna -slug')
+      .select('-__v -subtitle  -reviews -qna -slug')
   );
 };
 
