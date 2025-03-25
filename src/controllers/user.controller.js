@@ -1,4 +1,7 @@
 const userRepository = require('../repositories/user.repository');
+const { uploadSingle } = require('../utils/uploadUtil');
+
+exports.uploadUserFiles = uploadSingle('profileImage');
 
 exports.getAllUsers = async (req, res, next) => {
   try {
@@ -25,6 +28,7 @@ exports.updateUser = async (req, res, next) => {
   try {
     const { id } = req.params;
     const updates = req.body;
+    if (req.file) updates.profileImage = req.file.path;
 
     if (updates.password) {
       return res.status(400).json({ message: 'Use password reset feature to update password' });

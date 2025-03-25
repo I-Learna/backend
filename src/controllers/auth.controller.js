@@ -2,6 +2,7 @@ const AppErr = require('../middlewares/appErr');
 const catchAsync = require('../middlewares/catchAsync');
 const User = require('../models/user.model');
 const { InstructorRequest } = require('../models/instructor.model');
+const { uploadSingle } = require('../utils/uploadUtil');
 const sendEmail = require('../services/email');
 const emailTemplate = require('../services/emailHtml');
 const generateToken = require('../utils/generateToken');
@@ -9,6 +10,7 @@ const { formatName, capitalizeWords } = require('../utils/slugifyName');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 
+const uploadInstructorFiles = uploadSingle('profileImage');
 // Registration
 const registerUser = catchAsync(async (req, res, next) => {
   const { name, email, password, confirmPassword } = req.body;
@@ -292,21 +294,23 @@ const changePassword = catchAsync(async (req, res, next) => {
 // Request to be Instructor
 const requestInstructor = catchAsync(async (req, res, next) => {
   try {
-    const { userId, bio, profileImage, socialLinks } = req.body;
-    //  we can use req.user._id instead of userId
+    const { bio, socialLinks = {} } = req.body;
+    const userId = req.user._id;
+
     const user = await User.findById(userId).select('-__v -createdAt -updatedAt');
-    if (!user) return res.status(404).json({ message: 'User not found' });
-    //  if (!user) return (next(new AppErr('User not found', 404)));
+    if (!user) return next(new AppErr('User not found', 404));
+
     const existingRequest = await InstructorRequest.findOne({ userId });
     if (existingRequest) {
-      return res.status(400).json({ message: 'You already requested to become an instructor' });
-      //  if (!existingRequest) return (next(new AppErr('You already requested to become an instructor', 404)));
+      return next(new AppErr('You already requested to become an instructor', 400));
     }
+
+    const profileImage = req.file ? req.file.path : user.profileImage;
 
     const newRequest = await InstructorRequest.create({
       userId,
       bio: bio || '',
-      profileImage: profileImage || '',
+      profileImage,
       socialLinks: {
         twitter: socialLinks?.twitter || '',
         linkedin: socialLinks?.linkedin || '',
@@ -425,6 +429,7 @@ module.exports = {
   registerUser,
   loginUser,
   updateUserStatus,
+  uploadInstructorFiles,
   refreshToken,
   activateUser,
   googleAuth,

@@ -50,7 +50,7 @@ router.get(
 );
 
 // Instructor
-router.post('/request-instructor', protect, User.requestInstructor);
+router.post('/request-instructor', protect, User.uploadInstructorFiles, User.requestInstructor);
 router.post('/review-instructor', protect, User.reviewInstructorRequest);
 
 // Role
