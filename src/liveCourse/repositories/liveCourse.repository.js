@@ -24,7 +24,7 @@ exports.findAllCourses = async (filter = {}) => {
 // industry , sector  , createdBy name , createdby_profile image  , createdby bio ,   course name , course description ,   course main photo ,  last update of course , level , language ,  total hours of units , total number of sessions  , price , discount , priceAfterDiscount ,  total numbers of reviews , average of rate  , whatYouLearn ,  requirements  , units , and sessions
 exports.findCourseById = async (id) => {
   return (
-    Course.findById(id)
+    Course.findById(id, { isPublished: true })
       .populate('user', 'name profileImage bio')
       .populate('industry', 'name ')
       .populate('sector', 'name ')
@@ -139,4 +139,8 @@ exports.findQAById = async (id) => {
     .populate('askedBy', 'name profileImage ')
     .populate('answers.answeredBy', 'name role profileImage')
     .select('-__v ');
+};
+
+exports.getAllInstructorsForCourse = async (courseId) => {
+  return Course.findById(courseId).populate('user', 'name role profileImage').select('user');
 };

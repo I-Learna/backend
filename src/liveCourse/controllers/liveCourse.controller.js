@@ -85,6 +85,15 @@ exports.getAllCoursesByFreelancerId = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+exports.getAllFreelancersForCourse = async (req, res) => {
+  try {
+    const courseId = req.params.courseId;
+    const instructors = await courseRepo.getAllInstructorsForCourse(courseId);
+    res.status(200).json({ status: 'Success', length: instructors.length, instructors });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 exports.getAllCourses = async (req, res) => {
   try {
     const courses = await courseRepo.findAllCourses({});

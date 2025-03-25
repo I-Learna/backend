@@ -8,6 +8,7 @@ router.get('/publishedcourses', courseController.getPublishedCourses);
 router.get('/freelancer', protect, courseController.getAllCoursesByFreelancerId);
 router.put('/:courseId/approve', courseController.approveCourse);
 router.put('/:courseId/publish', courseController.publishCourse);
+router.get('/:courseId/instructors', courseController.getAllFreelancersForCourse);
 
 // Course routes
 router
