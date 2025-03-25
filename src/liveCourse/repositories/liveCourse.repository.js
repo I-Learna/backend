@@ -1,4 +1,5 @@
 const { Course } = require('../models/liveCourse.model');
+const { InstructorLiveEnrollRequest } = require('../models//InstructorEnroll.model');
 const { QA } = require('../../shared/models/qa.schema');
 const { Review } = require('../../shared/models/review.schema');
 
@@ -26,6 +27,8 @@ exports.findCourseById = async (id) => {
   return (
     Course.findById(id, { isPublished: true })
       .populate('user', 'name profileImage bio')
+      .select('instructors')
+      .populate('instructors.user', 'name profileImage bio')
       .populate('industry', 'name ')
       .populate('sector', 'name ')
       // .populate('coupon', 'name')
@@ -143,4 +146,58 @@ exports.findQAById = async (id) => {
 
 exports.getAllInstructorsForCourse = async (courseId) => {
   return Course.findById(courseId).populate('user', 'name role profileImage').select('user');
+};
+
+exports.getAllInstructorLiveEnrollRequests = async () => {
+  return InstructorLiveEnrollRequest.find()
+    .populate('user', 'name role profileImage')
+    .populate('course', 'name description')
+    .select('-__v -createdAt -updatedAt');
+};
+
+exports.requestInstructorEnrollment = async (userId, courseId, wage, schedule) => {
+  try {
+    const existingRequest = await InstructorLiveEnrollRequest.findOne({
+      user: userId,
+      course: courseId,
+    });
+
+    if (existingRequest) {
+      throw new Error('Enrollment request already submitted for this course.');
+    }
+
+    const enrollRequest = new InstructorLiveEnrollRequest({
+      user: userId,
+      course: courseId,
+      wage,
+      schedule,
+    });
+    await enrollRequest.save();
+    return { message: 'Enrollment request submitted successfully' };
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
+exports.approveOrRejectInstructor = async (requestId, courseId, status) => {
+  try {
+    const request = await InstructorLiveEnrollRequest.findOne({ _id: requestId, course: courseId });
+    if (!request) throw new Error('Enrollment request not found');
+
+    if (status === 'approve') {
+      await Course.findByIdAndUpdate(courseId, {
+        $push: {
+          instructors: { user: request.user, wage: request.wage, schedule: request.schedule },
+        },
+      });
+
+      await InstructorLiveEnrollRequest.findByIdAndDelete(requestId);
+      return { message: 'Instructor approved and added to the course' };
+    } else {
+      await InstructorLiveEnrollRequest.findByIdAndDelete(requestId);
+      return { message: 'Instructor enrollment request rejected' };
+    }
+  } catch (error) {
+    throw new Error(error.message);
+  }
 };

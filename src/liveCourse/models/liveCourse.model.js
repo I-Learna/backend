@@ -39,6 +39,19 @@ const liveCourseSchema = new Schema(
     totalReviews: { type: Number, default: 0 },
     averageRating: { type: Number, default: 0 },
     type: { type: String, default: 'Live' },
+
+    instructors: [
+      {
+        user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+        wage: { type: Number, required: true }, // wage per hour
+        schedule: [
+          {
+            date: { type: Date, required: true },
+            timeSlots: [{ type: String, required: true }],
+          },
+        ],
+      },
+    ],
   },
   { timestamps: true }
 );

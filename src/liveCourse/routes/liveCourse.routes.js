@@ -6,9 +6,13 @@ const { protect } = require('../../middlewares/authMiddleware');
 
 router.get('/publishedcourses', courseController.getPublishedCourses);
 router.get('/freelancer', protect, courseController.getAllCoursesByFreelancerId);
+router.get('/:courseId/instructors', courseController.getAllFreelancersForCourse);
+router.get('/enrollrequests', utilsController.getAllInstructorLiveEnrollRequests);
 router.put('/:courseId/approve', courseController.approveCourse);
 router.put('/:courseId/publish', courseController.publishCourse);
-router.get('/:courseId/instructors', courseController.getAllFreelancersForCourse);
+
+router.post('/:courseId/instructor/enroll', protect, utilsController.enrollInstructor);
+router.post('/instructor/:requestId/approve', protect, utilsController.handleInstructorApproval);
 
 // Course routes
 router

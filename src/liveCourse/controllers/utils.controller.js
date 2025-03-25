@@ -161,3 +161,44 @@ exports.getQuestions = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+exports.getAllInstructorLiveEnrollRequests = async (req, res) => {
+  try {
+    const instructorLiveEnrollRequests = await courseRepo.getAllInstructorLiveEnrollRequests();
+    res.status(200).json({
+      status: 'success',
+      total: instructorLiveEnrollRequests.length,
+      instructorLiveEnrollRequests,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.enrollInstructor = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const { wage, schedule } = req.body;
+    const userId = req.user.id;
+
+    const result = await courseRepo.requestInstructorEnrollment(userId, courseId, wage, schedule);
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+exports.handleInstructorApproval = async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const { status, course } = req.body;
+
+    if (!['approve', 'reject'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid action' });
+    }
+
+    const result = await courseRepo.approveOrRejectInstructor(requestId, course, status);
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
